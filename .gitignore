@@ -1,0 +1,51 @@
+# Игнорируем конфиги с чувствительными данными (пароли, ключи и т.д.)
+# /src/main/resources/application*.properties
+/src/main/resources/application*.yml
+/src/main/resources/app.properties
+
+# Логи и дампы
+*.log
+logs/
+heapdump.hprof
+
+# Игнорируем папки сборки
+target/
+build/
+!build/libs/  # исключаем только папку с собранными jar-файлами
+out/
+bin/
+
+# Игнорируем файлы IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.classpath
+.project
+.settings/
+.vscode/
+.factorypath
+
+# Игнорируем временные файлы
+*.tmp
+*.bak
+*.swp
+*~.nib
+
+# Игнорируем системные файлы
+.DS_Store
+Thumbs.db
+
+# Игнорируем зависимости (для Gradle)
+.gradle/
+!gradle-wrapper.jar
+
+# Игнорируем кэш Maven
+.mvn/
+mvnw
+mvnw.cmd
+.mvn/wrapper/maven-wrapper.jar
+
+# Игнорируем тестовые отчеты
+test-output/
+reports/
