@@ -15,14 +15,13 @@ public class GlobalExceptionHandler {
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public List<ErrorResponse> handleValidationExceptions(MethodArgumentNotValidException ex) {
+    public List<ErrorResponseDto> handleValidationExceptions(MethodArgumentNotValidException ex) {
         return ex.getBindingResult().getAllErrors().stream()
                 .map(error -> {
                     String fieldName = ((FieldError) error).getField();
-                    return new ErrorResponse(
+                    return new ErrorResponseDto(
                             fieldName,
-                            error.getDefaultMessage(),
-                            ((FieldError) error).getRejectedValue()
+                            error.getDefaultMessage()
                     );
                 })
                 .collect(Collectors.toList());
@@ -30,11 +29,10 @@ public class GlobalExceptionHandler {
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(RuntimeException.class)
-    public ErrorResponse handleUserExistsExceptions(RuntimeException ex) {
-        return new ErrorResponse(
+    public ErrorResponseDto handleUserExistsExceptions(RuntimeException ex) {
+        return new ErrorResponseDto(
                 null,
-                ex.getMessage(),
-                null
+                ex.getMessage()
         );
     }
 

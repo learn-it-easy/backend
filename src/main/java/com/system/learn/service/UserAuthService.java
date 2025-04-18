@@ -7,6 +7,8 @@ import com.system.learn.entity.User;
 import com.system.learn.repository.LanguageRepository;
 import com.system.learn.repository.UserRepository;
 import com.system.learn.security.JwtTokenProvider;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -15,9 +17,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Locale;
+
 @Service
 public class UserAuthService {
 
+    @Autowired
+    private MessageSource messageSource;
     private final UserRepository userRepository;
     private final LanguageRepository languageRepository;
     private final PasswordEncoder passwordEncoder;
@@ -27,11 +33,11 @@ public class UserAuthService {
     private final UserValidationService userValidationService;
 
     public UserAuthService(UserRepository userRepository,
-                       LanguageRepository languageRepository,
-                       PasswordEncoder passwordEncoder,
-                       JwtTokenProvider jwtTokenProvider,
-                       UserValidationService userValidationService,
-                       AuthenticationManager authenticationManager) {
+                           LanguageRepository languageRepository,
+                           PasswordEncoder passwordEncoder,
+                           JwtTokenProvider jwtTokenProvider,
+                           UserValidationService userValidationService,
+                           AuthenticationManager authenticationManager) {
         this.userRepository = userRepository;
         this.languageRepository = languageRepository;
         this.passwordEncoder = passwordEncoder;
@@ -41,18 +47,18 @@ public class UserAuthService {
     }
 
     @Transactional
-    public AuthResponseDto registerUser(UserRegistrationDto registrationDto) {
+    public AuthResponseDto registerUser(UserRegistrationDto registrationDto, Locale locale) {
 
-        userValidationService.validateUserExists(registrationDto.getUsername(), registrationDto.getEmail());
+        userValidationService.validateUserExists(registrationDto.getUsername(), registrationDto.getEmail(), locale);
 
         User user = new User();
         user.setEmail(registrationDto.getEmail());
         user.setUsername(registrationDto.getUsername());
         user.setPassword(passwordEncoder.encode(registrationDto.getPassword()));
         user.setLearningLanguage(languageRepository.findById(registrationDto.getLearningLanguageId())
-                .orElseThrow(() -> new RuntimeException("Нет такого языка в поле изучаемый")));
+                .orElseThrow(() -> new RuntimeException(messageSource.getMessage("error.not_such_language_in_learning", null, locale))));
         user.setNativeLanguage(languageRepository.findById(registrationDto.getNativeLanguageId())
-                .orElseThrow(() -> new RuntimeException("Нет такого языка в поле родной")));
+                .orElseThrow(() -> new RuntimeException(messageSource.getMessage("error.not_such_language_in_native", null, locale))));
 
         User savedUser = userRepository.save(user);
 
@@ -62,9 +68,9 @@ public class UserAuthService {
 
 
 
-    public AuthResponseDto authenticateUser(LoginRequestDto loginRequestDto) {
+    public AuthResponseDto authenticateUser(LoginRequestDto loginRequestDto, Locale locale) {
 
-        userValidationService.userIsNotExists(loginRequestDto.getUsername());
+        userValidationService.userIsNotExists(loginRequestDto.getUsername(), locale);
 
         try {
             Authentication authentication = authenticationManager.authenticate(
@@ -80,7 +86,7 @@ public class UserAuthService {
             return new AuthResponseDto(token);
 
         } catch (BadCredentialsException e) {
-            throw new RuntimeException("Неверный пароль");
+            throw new RuntimeException(messageSource.getMessage("error.not_right_password", null, locale));
         }
     }
 
@@ -90,13 +96,13 @@ public class UserAuthService {
         );
     }
 
-    public AuthResponseDto getToken(Long userId, String username, String password) {
+    public AuthResponseDto getToken(Long userId, String username, String password, Locale locale) {
         if (password == null) {
             // Если пароль не менялся — находим пользователя по username и генерируем токен
             return getToken(userId, username);
         } else {
             // Если пароль менялся — стандартная аутентификация
-            return authenticateUser(new LoginRequestDto(username, password));
+            return authenticateUser(new LoginRequestDto(username, password), locale);
         }
     }
 
