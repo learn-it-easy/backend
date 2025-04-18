@@ -80,7 +80,7 @@ public class ProfileService {
         } catch (BadCredentialsException e) {
             throw new RuntimeException( messageSource.getMessage("error.user_can_not_change_profile", null, locale));
         }
-
+ 
     }
 
     public UserProfileDto getUserProfile(HttpServletRequest request, Locale locale) {
