@@ -4,13 +4,11 @@ import com.system.learn.dto.AuthResponseDto;
 import com.system.learn.dto.LoginRequestDto;
 import com.system.learn.dto.UserRegistrationDto;
 import com.system.learn.service.UserAuthService;
-import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Locale;
 
 @RestController
 @RequestMapping("/auth")
@@ -24,15 +22,19 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<AuthResponseDto> registerUser(@Valid @RequestBody UserRegistrationDto registrationDto) {
-        AuthResponseDto token = userService.registerUser(registrationDto);
+    public ResponseEntity<AuthResponseDto> registerUser(@RequestBody UserRegistrationDto registrationDto,
+                                                        @CookieValue(value="lang", defaultValue = "ru") String lang) {
+        Locale locale = Locale.forLanguageTag(lang);
+        AuthResponseDto token = userService.registerUser(registrationDto, locale);
         return ResponseEntity.ok(token);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponseDto> login(@RequestBody LoginRequestDto loginRequestDto) {
-            AuthResponseDto token = userService.authenticateUser(loginRequestDto);
-            return ResponseEntity.ok(token);
+    public ResponseEntity<AuthResponseDto> login(@RequestBody LoginRequestDto loginRequestDto,
+                                                 @CookieValue(value="lang", defaultValue = "ru") String lang) {
+        Locale locale = Locale.forLanguageTag(lang);
+        AuthResponseDto token = userService.authenticateUser(loginRequestDto, locale);
+        return ResponseEntity.ok(token);
     }
 
 }

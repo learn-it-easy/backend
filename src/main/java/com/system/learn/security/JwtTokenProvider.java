@@ -1,50 +1,54 @@
 package com.system.learn.security;
 
+import com.system.learn.entity.User;
 import com.system.learn.repository.UserRepository;
 import io.jsonwebtoken.*;
-import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
-import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 @Component
 public class JwtTokenProvider {
 
     private final UserRepository userRepository;
+    private final SecretKey secretKey;
+    private final long validityInMilliseconds;
 
-
-    @Value("${app.jwt.secret}")
-    private String jwtSecret;
-
-    @Value("${app.jwt.expiration}")
-    private int jwtExpirationInMs;
-
-    public JwtTokenProvider(UserRepository userRepository) {
+    public JwtTokenProvider(UserRepository userRepository,
+                            SecretKey secretKey,
+                            @Value("${app.jwt.expiration}") long validityInMilliseconds) {
         this.userRepository = userRepository;
+        this.secretKey = secretKey;
+        this.validityInMilliseconds = validityInMilliseconds;
     }
 
     public String generateToken(String username, Long userId) {
 
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
         Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + jwtExpirationInMs);
+        Date expiryDate = new Date(now.getTime() + validityInMilliseconds);
 
         Claims claims = Jwts.claims().setSubject(username);
         claims.put("userId", userId);
+        claims.put("userLearningLanguageCode", user.getLearningLanguage().getCode());
+        claims.put("userNativeLanguageCode", user.getNativeLanguage().getCode());
 
         return Jwts.builder()
                 .setClaims(claims)
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
-                .signWith(getSigningKey(), SignatureAlgorithm.HS512)
+                .signWith(secretKey, SignatureAlgorithm.HS512)
                 .compact();
     }
 
     public String getUsernameFromToken(String token) {
         Claims claims = Jwts.parserBuilder()
-                .setSigningKey(getSigningKey())
+                .setSigningKey(secretKey)
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
@@ -52,7 +56,7 @@ public class JwtTokenProvider {
     }
     public Long getUserIdFromToken(String token) {
         Claims claims = Jwts.parserBuilder()
-                .setSigningKey(getSigningKey())
+                .setSigningKey(secretKey)
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
@@ -62,7 +66,7 @@ public class JwtTokenProvider {
     public boolean validateToken(String token) {
         try {
             Jwts.parserBuilder()
-                    .setSigningKey(getSigningKey())
+                    .setSigningKey(secretKey)
                     .build()
                     .parseClaimsJws(token);
             return true;
@@ -71,12 +75,9 @@ public class JwtTokenProvider {
         }
     }
 
-    private SecretKey getSigningKey() {
-        return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
-    }
-    public Claims getClaimsFromToken(String token) {
+  public Claims getClaimsFromToken(String token) {
         return Jwts.parserBuilder()
-                .setSigningKey(getSigningKey())
+                .setSigningKey(secretKey)
                 .build()
                 .parseClaimsJws(token)
                 .getBody();

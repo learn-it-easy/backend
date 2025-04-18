@@ -1,25 +1,19 @@
 package com.system.learn.dto;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.Size;
-
 public class UserProfileChangeDto {
 
-    @Email(message = "Email не валидный")
     private String email;
-
-    @Size(min = 3, max = 20, message = "Username должен быть от 3 до 20 символов")
     private String username;
-
-    @Size(min = 8, max = 16, message = "Пароль должен быть от 8 до 16 символов")
     private String password;
     private Long learningLanguageId;
+    private Long nativeLanguageId;
 
-    public UserProfileChangeDto(String username, String password, String email, Long learningLanguageId) {
+    public UserProfileChangeDto(String username, String password, String email, Long learningLanguageId, Long nativeLanguageId) {
         this.username = username;
         this.password = password;
         this.email = email;
         this.learningLanguageId = learningLanguageId;
+        this.nativeLanguageId = nativeLanguageId;
     }
 
     public UserProfileChangeDto() {
@@ -57,4 +51,11 @@ public class UserProfileChangeDto {
         this.learningLanguageId = learningLanguageId;
     }
 
+    public Long getNativeLanguageId() {
+        return nativeLanguageId;
+    }
+
+    public void setNativeLanguageId(Long nativeLanguageId) {
+        this.nativeLanguageId = nativeLanguageId;
+    }
 }
