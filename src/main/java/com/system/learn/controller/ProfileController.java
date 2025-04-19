@@ -4,11 +4,8 @@ import com.system.learn.dto.AuthResponseDto;
 import com.system.learn.dto.UserProfileChangeDto;
 import com.system.learn.dto.UserProfileDto;
 import com.system.learn.service.ProfileService;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Locale;
 
 
 @RestController
@@ -22,20 +19,20 @@ public class ProfileController {
     }
 
     @GetMapping
-    public UserProfileDto getUserProfile(HttpServletRequest request,
-                                         @CookieValue(value="lang", defaultValue = "ru") String lang) {
+    public UserProfileDto getUserProfile(
+            @RequestHeader("Authorization") String token,
+            @CookieValue(value="lang", defaultValue = "ru") String lang) {
 
-        Locale locale = Locale.forLanguageTag(lang);
-        return profileService.getUserProfile(request, locale);
+        return profileService.getUserProfile(token, lang);
     }
 
     @PatchMapping
-    public AuthResponseDto updateCurrentUserProfile(@Valid @RequestBody UserProfileChangeDto profileChangeDto,
-                                                    HttpServletRequest request,
-                                                    @CookieValue(value="lang", defaultValue = "ru") String lang) {
+    public AuthResponseDto updateCurrentUserProfile(
+            @Valid @RequestBody UserProfileChangeDto profileChangeDto,
+            @RequestHeader("Authorization") String token,
+            @CookieValue(value="lang", defaultValue = "ru") String lang) {
 
-        Locale locale = Locale.forLanguageTag(lang);
-        return profileService.changeProfile(profileChangeDto, request, locale);
+        return profileService.changeProfile(profileChangeDto, token, lang);
 
     }
 

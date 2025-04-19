@@ -1,6 +1,7 @@
 package com.system.learn.security;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import org.springframework.stereotype.Component;
 
@@ -12,6 +13,14 @@ public class JwtUtils {
 
     public JwtUtils(SecretKey secretKey) {
         this.secretKey = secretKey;
+    }
+
+
+    public String cleanToken(String token) {
+        if (token == null) {
+            throw new JwtException("Token is null");
+        }
+        return token.startsWith("Bearer ") ? token.substring(7) : token;
     }
 
     public String getLearningLanguageCode(String token) {
