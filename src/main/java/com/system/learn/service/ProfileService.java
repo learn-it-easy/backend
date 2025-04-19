@@ -7,7 +7,7 @@ import com.system.learn.entity.User;
 import com.system.learn.repository.LanguageRepository;
 import com.system.learn.repository.UserRepository;
 import com.system.learn.security.JwtTokenProvider;
-import jakarta.servlet.http.HttpServletRequest;
+import com.system.learn.security.JwtUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -22,30 +22,30 @@ public class ProfileService {
     @Autowired
     private MessageSource messageSource;
     public final UserRepository userRepository;
-    private final JwtContextService jwtContextService;
+    private final JwtUtils jwtUtils;
+    private final UserService userService;
     private final PasswordEncoder passwordEncoder;
     private final UserValidationService userValidationService;
     private final UserAuthService userAuthService;
     private final LanguageService languageService;
 
-    public ProfileService(UserRepository userRepository, JwtContextService securityContextService, PasswordEncoder passwordEncoder, UserValidationService userValidationService, UserAuthService userAuthService, JwtTokenProvider jwtTokenProvider, LanguageRepository languageRepository, LanguageService languageService) {
+    public ProfileService(UserRepository userRepository, JwtUtils jwtUtils, UserService userService, PasswordEncoder passwordEncoder, UserValidationService userValidationService, UserAuthService userAuthService, JwtTokenProvider jwtTokenProvider, LanguageRepository languageRepository, LanguageService languageService) {
         this.userRepository = userRepository;
-        this.jwtContextService = securityContextService;
+        this.jwtUtils = jwtUtils;
+        this.userService = userService;
         this.passwordEncoder = passwordEncoder;
         this.userValidationService = userValidationService;
         this.userAuthService = userAuthService;
         this.languageService = languageService;
     }
 
-    public AuthResponseDto changeProfile(UserProfileChangeDto profileChangeDto,HttpServletRequest request, Locale locale) {
+    public AuthResponseDto changeProfile(UserProfileChangeDto profileChangeDto,String token, String lang) {
 
-        Long currentUserId = jwtContextService.getCurrentUserIdFromToken(request);
+        Long currentUserId = jwtUtils.getUserIdFromToken(token);
 
+        Locale locale = Locale.forLanguageTag(lang);
 
-        User user = userRepository.findById(currentUserId)
-                .orElseThrow(() -> new RuntimeException(
-                        messageSource.getMessage("error.user_not_found", null, locale)
-                ));
+        User user = userService.getUserById(currentUserId, lang);
 
         if (profileChangeDto.getUsername() != null) {
             userValidationService.validateUserByUsername(profileChangeDto.getUsername(), currentUserId, locale);
@@ -75,7 +75,7 @@ public class ProfileService {
 
             userRepository.save(user);
 
-            return userAuthService.getToken(currentUserId, user.getUsername(), profileChangeDto.getPassword(), locale);
+            return userAuthService.getToken(currentUserId, user.getUsername(), profileChangeDto.getPassword(), lang);
 
         } catch (BadCredentialsException e) {
             throw new RuntimeException( messageSource.getMessage("error.user_can_not_change_profile", null, locale));
@@ -83,14 +83,12 @@ public class ProfileService {
  
     }
 
-    public UserProfileDto getUserProfile(HttpServletRequest request, Locale locale) {
+    public UserProfileDto getUserProfile(String token, String lang) {
 
-        Long currentUserId = jwtContextService.getCurrentUserIdFromToken(request);
+        Long currentUserId = jwtUtils.getUserIdFromToken(jwtUtils.cleanToken(token));
+        User user = userService.getUserById(currentUserId, lang);
 
-        User user = userRepository.findById(currentUserId)
-                .orElseThrow(() -> new RuntimeException(
-                        messageSource.getMessage("error.user_not_found", null, locale)
-                ));
+
         return new UserProfileDto(
                 user.getUsername(),
                 user.getEmail(),

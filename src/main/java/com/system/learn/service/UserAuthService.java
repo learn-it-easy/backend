@@ -47,8 +47,9 @@ public class UserAuthService {
     }
 
     @Transactional
-    public AuthResponseDto registerUser(UserRegistrationDto registrationDto, Locale locale) {
+    public AuthResponseDto registerUser(UserRegistrationDto registrationDto, String lang) {
 
+        Locale locale = Locale.forLanguageTag(lang);
         userValidationService.validateUserExists(registrationDto.getUsername(), registrationDto.getEmail(), locale);
 
         User user = new User();
@@ -68,8 +69,9 @@ public class UserAuthService {
 
 
 
-    public AuthResponseDto authenticateUser(LoginRequestDto loginRequestDto, Locale locale) {
+    public AuthResponseDto authenticateUser(LoginRequestDto loginRequestDto, String lang) {
 
+        Locale locale = Locale.forLanguageTag(lang);
         userValidationService.userIsNotExists(loginRequestDto.getUsername(), locale);
 
         try {
@@ -96,13 +98,13 @@ public class UserAuthService {
         );
     }
 
-    public AuthResponseDto getToken(Long userId, String username, String password, Locale locale) {
+    public AuthResponseDto getToken(Long userId, String username, String password, String lang) {
         if (password == null) {
             // Если пароль не менялся — находим пользователя по username и генерируем токен
             return getToken(userId, username);
         } else {
             // Если пароль менялся — стандартная аутентификация
-            return authenticateUser(new LoginRequestDto(username, password), locale);
+            return authenticateUser(new LoginRequestDto(username, password), lang);
         }
     }
 

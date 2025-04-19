@@ -23,6 +23,8 @@ public class Folder {
     @OneToMany(mappedBy = "folder")
     private List<Word> words = new ArrayList<>();
 
+    public Folder() {}
+
     public Long getId() {
         return id;
     }
