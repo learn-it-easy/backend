@@ -1,6 +1,6 @@
-package com.system.learn.dto;
+package com.system.learn.dto.auth;
 
-public class UserProfileChangeDto {
+public class UserRegistrationDto {
 
     private String email;
     private String username;
@@ -8,15 +8,12 @@ public class UserProfileChangeDto {
     private Long learningLanguageId;
     private Long nativeLanguageId;
 
-    public UserProfileChangeDto(String username, String password, String email, Long learningLanguageId, Long nativeLanguageId) {
-        this.username = username;
-        this.password = password;
-        this.email = email;
-        this.learningLanguageId = learningLanguageId;
-        this.nativeLanguageId = nativeLanguageId;
+    public String getEmail() {
+        return email;
     }
 
-    public UserProfileChangeDto() {
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public String getUsername() {
@@ -33,14 +30,6 @@ public class UserProfileChangeDto {
 
     public void setPassword(String password) {
         this.password = password;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
     }
 
     public Long getLearningLanguageId() {

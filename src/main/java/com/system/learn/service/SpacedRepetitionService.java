@@ -1,64 +1,65 @@
 package com.system.learn.service;
 
-import com.system.learn.entity.Word;
-import com.system.learn.entity.Word.Difficulty;
-import com.system.learn.repository.WordRepository;
+import com.system.learn.dto.ErrorResponseDto;
+import com.system.learn.entity.Card;
+import com.system.learn.entity.User;
+import com.system.learn.repository.CardRepository;
+import com.system.learn.utils.JwtUtils;
+import jakarta.persistence.EntityNotFoundException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.util.Locale;
 
 @Service
 public class SpacedRepetitionService {
 
-    private final WordRepository wordRepository;
 
-    public SpacedRepetitionService(WordRepository wordRepository) {
-        this.wordRepository = wordRepository;
+    @Autowired
+    private MessageSource messageSource;
+    private final CardRepository cardRepository;
+    private final JwtUtils jwtUtils;
+    private final UserService userService;
+
+    public SpacedRepetitionService(CardRepository cardRepository, JwtUtils jwtUtils, UserService userService) {
+        this.cardRepository = cardRepository;
+        this.jwtUtils = jwtUtils;
+        this.userService = userService;
     }
 
     @Transactional
-    public void processReview(Word word, Difficulty difficulty) {
-        // Обновляем базовые поля
-        word.setLastReviewedAt(LocalDateTime.now());
-        word.setDifficulty(difficulty);
-        word.setRepetitionCount(word.getRepetitionCount() + 1);
+    public ResponseEntity<?> processCardReview(Long cardId, String difficulty, String token, String lang) {
+        try {
+            Long currentUserId = jwtUtils.getUserIdFromToken(jwtUtils.cleanToken(token));
+            User currentUser = userService.getUserById(currentUserId, lang);
 
-        // Вычисляем новые значения
-        int newInterval = calculateReviewInterval(word, difficulty);
-        double newEaseFactor = calculateEaseFactor(word.getEaseFactor(), difficulty);
+            Card card = cardRepository.findByIdAndUser(cardId, currentUser)
+                    .orElseThrow(() -> new EntityNotFoundException(
+                            messageSource.getMessage("card.not_found", null, Locale.forLanguageTag(lang))
+                    ));
 
-        // Применяем изменения
-        word.setReviewInterval(newInterval);
-        word.setEaseFactor(newEaseFactor);
-        word.setNextReviewAt(
-                word.getLastReviewedAt().plusDays(newInterval)
-        );
+            Card.Difficulty difficultyEnum = Card.Difficulty.valueOf(difficulty.toUpperCase());
 
-        wordRepository.save(word);
-    }
+            card.processReview(difficultyEnum);
+            cardRepository.save(card);
 
-    private int calculateReviewInterval(Word word, Difficulty difficulty) {
-        if (word.getRepetitionCount() == 1) {
-            return switch (difficulty) {
-                case EASY -> 4;
-                case MEDIUM -> 2;
-                case HARD -> 1;
-            };
+            return ResponseEntity.ok(new ErrorResponseDto(
+                    null,
+                    messageSource.getMessage("card.review_processed", null, Locale.forLanguageTag(lang))
+            ));
+
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ErrorResponseDto("cardId", e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(new ErrorResponseDto(
+                    "difficulty",
+                    messageSource.getMessage("card.invalid_difficulty", null, Locale.forLanguageTag(lang))
+            ));
         }
-
-        return (int) (word.getReviewInterval() * switch (difficulty) {
-            case EASY -> word.getEaseFactor() * 1.3;
-            case MEDIUM -> word.getEaseFactor();
-            case HARD -> word.getEaseFactor() * 0.8;
-        });
-    }
-
-    private double calculateEaseFactor(double currentEase, Difficulty difficulty) {
-        return switch (difficulty) {
-            case EASY -> Math.min(currentEase + 0.15, 2.5);
-            case HARD -> Math.max(currentEase - 0.15, 1.3);
-            case MEDIUM -> currentEase;
-        };
     }
 }

@@ -1,13 +1,13 @@
 package com.system.learn.service;
 
-import com.system.learn.dto.AuthResponseDto;
-import com.system.learn.dto.UserProfileChangeDto;
-import com.system.learn.dto.UserProfileDto;
+import com.system.learn.dto.auth.AuthResponseDto;
+import com.system.learn.dto.profile.UserProfileChangeDto;
+import com.system.learn.dto.profile.UserProfileDto;
 import com.system.learn.entity.User;
 import com.system.learn.repository.LanguageRepository;
 import com.system.learn.repository.UserRepository;
 import com.system.learn.security.JwtTokenProvider;
-import com.system.learn.security.JwtUtils;
+import com.system.learn.utils.JwtUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.security.authentication.BadCredentialsException;

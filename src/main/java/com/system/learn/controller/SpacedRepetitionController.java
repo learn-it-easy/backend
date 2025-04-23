@@ -1,32 +1,29 @@
 package com.system.learn.controller;
 
 
-import com.system.learn.entity.Word;
-import com.system.learn.repository.WordRepository;
 import com.system.learn.service.SpacedRepetitionService;
+import com.system.learn.utils.CookieUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/space-repetition")
 public class SpacedRepetitionController {
-    private final SpacedRepetitionService repetitionService;
-    private final WordRepository wordRepository;
 
-    public SpacedRepetitionController(SpacedRepetitionService repetitionService, WordRepository wordRepository) {
-        this.repetitionService = repetitionService;
-        this.wordRepository = wordRepository;
+   private final SpacedRepetitionService spacedRepetitionService;
+
+    public SpacedRepetitionController(SpacedRepetitionService spacedRepetitionService) {
+        this.spacedRepetitionService = spacedRepetitionService;
     }
 
-    @PostMapping("/{wordId}/review")
-    public ResponseEntity<Void> processReview(
-            @PathVariable Long wordId,
-            @RequestParam Word.Difficulty difficulty
-    ) {
-        Word word = wordRepository.findById(wordId)
-                .orElseThrow(() -> new RuntimeException("Word not found"));
 
-        repetitionService.processReview(word, difficulty);
-        return ResponseEntity.ok().build();
+    @PostMapping
+    public ResponseEntity<?> processCardReview(
+            @RequestParam int cardId,
+            @RequestParam String difficulty, // "easy", "medium", "hard"
+            @RequestHeader("Authorization") String token,
+            @CookieValue(value = CookieUtils.INTERFACE_LANG_COOKIE, defaultValue = "ru") String lang) {
+
+        return spacedRepetitionService.processCardReview(Long.valueOf(cardId), difficulty, token, lang);
     }
 }

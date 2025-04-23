@@ -3,6 +3,9 @@
 /src/main/resources/application*.yml
 /src/main/resources/app.properties
 
+# Игнорируем запросы для тестов
+/src/main/resources/templates/temp.sql
+
 # Логи и дампы
 *.log
 logs/

@@ -1,4 +1,4 @@
-package com.system.learn.dto;
+package com.system.learn.dto.folder;
 
 public class FolderCreateDto {
     private String name;

@@ -2,7 +2,7 @@ package com.system.learn.configuration;
 
 import com.system.learn.repository.UserRepository;
 import com.system.learn.security.JwtTokenProvider;
-import com.system.learn.security.JwtUtils;
+import com.system.learn.utils.JwtUtils;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

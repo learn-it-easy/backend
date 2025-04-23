@@ -1,5 +1,6 @@
 package com.system.learn.service.exception;
 
+import com.system.learn.dto.ErrorResponseDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
