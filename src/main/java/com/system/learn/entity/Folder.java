@@ -20,8 +20,8 @@ public class Folder {
     @Column(nullable = false, length = 100)
     private String name;
 
-    @OneToMany(mappedBy = "folder")
-    private List<Word> words = new ArrayList<>();
+    @OneToMany(mappedBy = "folder", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Card> cards = new ArrayList<>();
 
     public Folder() {}
 
@@ -49,12 +49,12 @@ public class Folder {
         this.name = name;
     }
 
-    public List<Word> getWords() {
-        return words;
+    public List<Card> getCards() {
+        return cards;
     }
 
-    public void setWords(List<Word> words) {
-        this.words = words;
+    public void setCards(List<Card> cards) {
+        this.cards = cards;
     }
 
     @Override
@@ -63,7 +63,7 @@ public class Folder {
                 "id=" + id +
                 ", user=" + user +
                 ", name='" + name + '\'' +
-                ", words=" + words +
+                ", words=" + cards +
                 '}';
     }
 
@@ -71,11 +71,11 @@ public class Folder {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Folder folder)) return false;
-        return Objects.equals(id, folder.id) && Objects.equals(user, folder.user) && Objects.equals(name, folder.name) && Objects.equals(words, folder.words);
+        return Objects.equals(id, folder.id) && Objects.equals(user, folder.user) && Objects.equals(name, folder.name) && Objects.equals(cards, folder.cards);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, user, name, words);
+        return Objects.hash(id, user, name, cards);
     }
 }

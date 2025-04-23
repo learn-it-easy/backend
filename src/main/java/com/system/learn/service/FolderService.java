@@ -1,12 +1,13 @@
 package com.system.learn.service;
 
-import com.system.learn.dto.FolderCreateDto;
-import com.system.learn.dto.FolderGetDto;
-import com.system.learn.dto.FolderPageDto;
+import com.system.learn.dto.ErrorResponseDto;
+import com.system.learn.dto.folder.FolderCreateDto;
+import com.system.learn.dto.folder.FolderGetDto;
+import com.system.learn.dto.folder.FolderPageDto;
 import com.system.learn.entity.Folder;
 import com.system.learn.entity.User;
 import com.system.learn.repository.FolderRepository;
-import com.system.learn.security.JwtUtils;
+import com.system.learn.utils.JwtUtils;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -130,24 +131,57 @@ public class FolderService {
     }
 
     @Transactional
-    public void deleteUserFolder(Long folderId, String token, String lang) {
-
-        Long currentUserId = jwtUtils.getUserIdFromToken(jwtUtils.cleanToken(token));
-
-        User currentUser = userService.getUserById(currentUserId, lang);
-
-        Folder folder = getFolderById(folderId, currentUser, lang, "folder.not_found_to_delete");
-
-        folderRepository.delete(folder);
-    }
-
-
-    private Folder getFolderById(Long folderId, User currentUser, String lang, String messageIfNotFound) {
+    public ResponseEntity<?> deleteUserFolder(Long folderId, String token, String lang) {
         Locale locale = Locale.forLanguageTag(lang);
-        return folderRepository.findByIdAndUser(folderId, currentUser)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        messageSource.getMessage(messageIfNotFound, null, locale)));
+
+        try {
+            Long currentUserId = jwtUtils.getUserIdFromToken(jwtUtils.cleanToken(token));
+            User currentUser = userService.getUserById(currentUserId, lang);
+
+            Folder folder = folderByFolderIdAndUser(folderId, currentUser, lang);
+
+            folderRepository.delete(folder);
+
+            return ResponseEntity.ok(new ErrorResponseDto(null,
+                    messageSource.getMessage("folder.delete_success",
+                            new Object[]{folder.getName()},
+                            locale)));
+
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ErrorResponseDto("folderId",
+                            messageSource.getMessage("folder.not_found", null, locale)));
+        }
     }
+
+    public ResponseEntity<?> changeNameOfFolder(Long folderId, FolderCreateDto folderCreateDto, String token, String lang){
+
+        try {
+            Long currentUserId = jwtUtils.getUserIdFromToken(jwtUtils.cleanToken(token));
+            User currentUser = userService.getUserById(currentUserId, lang);
+
+            Folder folder = folderByFolderIdAndUser(folderId, currentUser, lang);
+
+            if (folder.getName() != folderCreateDto.getName()){
+                folder.setName(folderCreateDto.getName());
+                folderRepository.save(folder);
+            }
+
+            return ResponseEntity.ok(new ErrorResponseDto(null,
+                    messageSource.getMessage("folder.change_name_success",
+                            new Object[]{folder.getName()},
+                            Locale.forLanguageTag(lang))));
+
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ErrorResponseDto(
+                            "folderId",
+                            e.getMessage()
+                    ));
+        }
+
+    }
+
 
     private FolderGetDto convertToDto(Folder folder) {
         return new FolderGetDto(folder.getId(), folder.getName());
@@ -157,6 +191,23 @@ public class FolderService {
     public ResponseEntity haveNotFolders(String lang){
         return ResponseEntity.status(HttpStatus.NO_CONTENT)
                 .body(messageSource.getMessage("folders.not_found", null, Locale.forLanguageTag(lang)));
+    }
+
+    private Folder folderByFolderIdAndUser(Long folderId, User user, String lang){
+        return folderRepository.findByIdAndUser(folderId, user)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        messageSource.getMessage("folder.not_found", null, Locale.forLanguageTag(lang))
+                ));
+    }
+
+    public Folder getFolderByUserAndFolderId(User user, Long folderId, String lang){
+
+        Locale locale = Locale.forLanguageTag(lang);
+
+        return folderRepository.findByIdAndUser(folderId, user)
+                .orElseThrow(() -> new RuntimeException(
+                        messageSource.getMessage("folder.not_found", null, locale)
+                ));
     }
 
 }

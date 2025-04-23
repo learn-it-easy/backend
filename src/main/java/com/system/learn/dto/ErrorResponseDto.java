@@ -1,4 +1,4 @@
-package com.system.learn.service.exception;
+package com.system.learn.dto;
 
 public class ErrorResponseDto {
     private final String field;

@@ -1,8 +1,8 @@
 package com.system.learn.service;
 
-import com.system.learn.dto.AuthResponseDto;
-import com.system.learn.dto.LoginRequestDto;
-import com.system.learn.dto.UserRegistrationDto;
+import com.system.learn.dto.auth.AuthResponseDto;
+import com.system.learn.dto.auth.LoginRequestDto;
+import com.system.learn.dto.auth.UserRegistrationDto;
 import com.system.learn.entity.User;
 import com.system.learn.repository.LanguageRepository;
 import com.system.learn.repository.UserRepository;

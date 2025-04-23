@@ -1,4 +1,4 @@
-package com.system.learn.dto;
+package com.system.learn.dto.auth;
 
 public class LoginRequestDto {
     private String username;

@@ -1,6 +1,6 @@
 package com.system.learn.service;
 
-import com.system.learn.security.JwtUtils;
+import com.system.learn.utils.JwtUtils;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Service;

@@ -1,11 +1,12 @@
 package com.system.learn.controller;
 
-import com.system.learn.dto.FolderCreateDto;
-import com.system.learn.dto.FolderGetDto;
-import com.system.learn.dto.FolderIdResponse;
-import com.system.learn.dto.FolderPageDto;
+import com.system.learn.dto.folder.FolderCreateDto;
+import com.system.learn.dto.folder.FolderGetDto;
+import com.system.learn.dto.folder.FolderIdResponse;
+import com.system.learn.dto.folder.FolderPageDto;
 import com.system.learn.entity.Folder;
 import com.system.learn.service.FolderService;
+import com.system.learn.utils.CookieUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,7 +28,7 @@ public class FolderController {
     public ResponseEntity<FolderIdResponse> createFolder(
             @RequestBody FolderCreateDto folderCreateDto,
             @RequestHeader("Authorization") String token,
-            @CookieValue(value = "lang", defaultValue = "ru") String lang) {
+            @CookieValue(value= CookieUtils.INTERFACE_LANG_COOKIE, defaultValue = CookieUtils.DEFAULT_LANG_FOR_INTERFACE_COOKIE) String lang) {
 
 
         Folder createdFolder = folderService.createFolder(folderCreateDto, token, lang);
@@ -36,11 +37,11 @@ public class FolderController {
     }
 
 
-    @GetMapping("/get")
+    @PostMapping("/get")
     public ResponseEntity<?> getFoldersPaginated(
             @RequestHeader("Authorization") String token,
-            @RequestParam(defaultValue = "1") int page,
-            @CookieValue(value = "lang", defaultValue = "ru") String lang) {
+            @RequestParam int page,
+            @CookieValue(value= CookieUtils.INTERFACE_LANG_COOKIE, defaultValue = CookieUtils.DEFAULT_LANG_FOR_INTERFACE_COOKIE) String lang) {
 
         FolderPageDto result = folderService.getUserFolders(token, page, lang);
 
@@ -54,21 +55,29 @@ public class FolderController {
     @GetMapping("/get/all")
     public List<FolderGetDto> getAllFolders(
             @RequestHeader("Authorization") String token,
-            @CookieValue(value = "lang", defaultValue = "ru") String lang) {
+            @CookieValue(value= CookieUtils.INTERFACE_LANG_COOKIE, defaultValue = CookieUtils.DEFAULT_LANG_FOR_INTERFACE_COOKIE) String lang) {
 
         return folderService.getAllFolders(token, lang);
     }
 
 
-    @DeleteMapping("/delete/{folderId}")
+    @DeleteMapping("/delete")
     public ResponseEntity<?> deleteFolder(
-            @PathVariable Long folderId,
+            @RequestParam int folderId,
             @RequestHeader("Authorization") String token,
-            @CookieValue(value = "lang", defaultValue = "ru") String lang) {
+            @CookieValue(value= CookieUtils.INTERFACE_LANG_COOKIE, defaultValue = CookieUtils.DEFAULT_LANG_FOR_INTERFACE_COOKIE) String lang) {
 
-            folderService.deleteUserFolder(folderId, token, lang);
-            return ResponseEntity.noContent().build();
+            return folderService.deleteUserFolder(Long.valueOf(folderId), token, lang);
+    }
 
+    @PatchMapping("/changeName")
+    public ResponseEntity<?> changeNameFolder(
+            @RequestParam int folderId,
+            @RequestBody FolderCreateDto folderCreateDto,
+            @RequestHeader("Authorization") String token,
+            @CookieValue(value= CookieUtils.INTERFACE_LANG_COOKIE, defaultValue = CookieUtils.DEFAULT_LANG_FOR_INTERFACE_COOKIE) String lang) {
+
+        return folderService.changeNameOfFolder(Long.valueOf(folderId), folderCreateDto, token, lang);
     }
 
 
