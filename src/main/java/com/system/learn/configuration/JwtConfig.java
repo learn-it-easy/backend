@@ -19,7 +19,7 @@ public class JwtConfig {
 
     @Value("${app.jwt.expiration}")
     private Long jwtExpirationMs;
-
+    JwtTokenProvider jwtTokenProvider;
     @Bean
     public SecretKey jwtSecretKey() {
         return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
@@ -27,11 +27,11 @@ public class JwtConfig {
 
     @Bean
     public JwtTokenProvider jwtTokenProvider(SecretKey jwtSecretKey, UserRepository userRepository) {
-        return new JwtTokenProvider(userRepository, jwtSecretKey, jwtExpirationMs);
+        return  jwtTokenProvider = new JwtTokenProvider(userRepository, jwtSecretKey, jwtExpirationMs);
     }
 
     @Bean
     public JwtUtils jwtUtils(SecretKey jwtSecretKey) {
-        return new JwtUtils(jwtSecretKey);
+        return new JwtUtils(jwtSecretKey, jwtTokenProvider);
     }
 }
