@@ -41,6 +41,8 @@ public class ProfileService {
 
     public AuthResponseDto changeProfile(UserProfileChangeDto profileChangeDto,String token, String lang) {
 
+        token = jwtUtils.cleanToken(token);
+
         Long currentUserId = jwtUtils.getUserIdFromToken(token);
 
         Locale locale = Locale.forLanguageTag(lang);

@@ -1,8 +1,10 @@
 package com.system.learn.utils;
 
+import com.system.learn.security.JwtTokenProvider;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -10,9 +12,11 @@ import javax.crypto.SecretKey;
 @Component
 public class JwtUtils {
     private final SecretKey secretKey;
+    private final JwtTokenProvider jwtTokenProvider;
 
-    public JwtUtils(SecretKey secretKey) {
+    public JwtUtils(SecretKey secretKey, JwtTokenProvider jwtTokenProvider) {
         this.secretKey = secretKey;
+        this.jwtTokenProvider = jwtTokenProvider;
     }
 
 
@@ -53,4 +57,20 @@ public class JwtUtils {
         return claims.get("userId", Long.class);
     }
 
+    public ResponseEntity<?> validateToken (String authHeader){
+
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return ResponseEntity.badRequest().body("Invalid authorization header");
+        }
+
+        String token = cleanToken(authHeader);
+
+        boolean isValid = jwtTokenProvider.validateToken(token);
+
+        if (isValid) {
+            return ResponseEntity.ok().body("Token is valid");
+        } else {
+            return ResponseEntity.badRequest().body("Invalid token");
+        }
+    }
 }
