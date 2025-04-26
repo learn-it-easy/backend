@@ -23,5 +23,7 @@ public interface FolderRepository extends JpaRepository<Folder, Long> {
                                               @Param("offset") int offset,
                                               @Param("limit") int limit);
     Optional<Folder> findByIdAndUser(Long id, User user);
+    @Query("SELECT DISTINCT f FROM Folder f LEFT JOIN FETCH f.cards WHERE f.user.id = :userId ORDER BY f.id ASC")
+    List<Folder> findByUserWithCards(@Param("userId") Long userId);
 
 }

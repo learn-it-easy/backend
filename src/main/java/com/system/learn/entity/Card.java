@@ -208,6 +208,8 @@ public class Card {
         this.easeFactor = Math.min(this.easeFactor + EASE_FACTOR_INCREMENT, 2.5);
     }
 
+
+
     @Override
     public String toString() {
         return "Card{" +
