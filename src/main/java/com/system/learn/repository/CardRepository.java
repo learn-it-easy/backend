@@ -56,6 +56,10 @@ public interface CardRepository extends JpaRepository<Card, Long> {
 
     List<Card> findByFolderAndUser(Folder folder, User user);
 
+    @Query("SELECT c FROM Card c WHERE c.user.id = :userId")
+    List<Card> findByUserId(@Param("userId") Long userId);
+    @Query("SELECT c FROM Card c WHERE c.folder.id IN :folderIds")
+    List<Card> findByFolderIdIn(@Param("folderIds") List<Long> folderIds);
 
     @Query(value = """
         SELECT 

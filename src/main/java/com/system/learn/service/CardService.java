@@ -1,10 +1,7 @@
 package com.system.learn.service;
 
-import com.system.learn.dto.card.CardDto;
+import com.system.learn.dto.card.*;
 import com.system.learn.dto.ErrorResponseDto;
-import com.system.learn.dto.card.CardDtoProjection;
-import com.system.learn.dto.card.CardGetForFolderDto;
-import com.system.learn.dto.card.CardPageDto;
 import com.system.learn.entity.Card;
 import com.system.learn.entity.Folder;
 import com.system.learn.entity.User;
@@ -468,4 +465,5 @@ public class CardService {
         return ResponseEntity.ok(cardDto);
 
     }
+
 }
