@@ -2,6 +2,7 @@ package com.system.learn.controller;
 
 import com.system.learn.dto.card.CardDto;
 import com.system.learn.dto.card.CardPageDto;
+import com.system.learn.dto.card.CardPartialUpdateDto;
 import com.system.learn.service.CardService;
 import com.system.learn.utils.CookieUtils;
 import org.springframework.http.ResponseEntity;
@@ -38,7 +39,7 @@ public class CardController {
 
     @PatchMapping("/update")
     public ResponseEntity<?> updateCard(
-            @RequestBody CardDto cardDto,
+            @RequestBody CardPartialUpdateDto cardDto,
             @RequestParam int cardId,
             @RequestHeader("Authorization") String token,
             @CookieValue(value= CookieUtils.INTERFACE_LANG_COOKIE, defaultValue = CookieUtils.DEFAULT_LANG_FOR_INTERFACE_COOKIE) String lang) {
@@ -49,14 +50,14 @@ public class CardController {
 
     @PostMapping("/get")
     public CardDto getCard(
-            @RequestParam int cardId,
+            @RequestParam Long cardId,
             @RequestHeader("Authorization") String token,
             @CookieValue(value= CookieUtils.INTERFACE_LANG_COOKIE, defaultValue = CookieUtils.DEFAULT_LANG_FOR_INTERFACE_COOKIE) String lang) {
 
-        return cardService.getCard(Long.valueOf(cardId), token, lang);
+        return cardService.getCard(cardId, token, lang);
     }
 
-    @PostMapping("/get/review-folder")
+    @GetMapping("/get/review-folder")
     public ResponseEntity<?> getNextCardForReviewFromFolder(
             @RequestParam int folderId,
             @RequestHeader("Authorization") String token,

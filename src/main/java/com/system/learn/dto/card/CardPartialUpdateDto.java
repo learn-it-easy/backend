@@ -1,22 +1,21 @@
 package com.system.learn.dto.card;
 
-public class CardDto {
+import jakarta.annotation.Nullable;
+
+public class CardPartialUpdateDto {
+
+    @Nullable
     private Long folderId;
+
+    @Nullable
     private String text;
+
+    @Nullable
     private String textTranslation;
-    private boolean isImage;
-    private Long cardId;
 
-    public CardDto(Long folderId, String text, String textTranslation, boolean isImage, Long cardId) {
-        this.folderId = folderId;
-        this.text = text;
-        this.textTranslation = textTranslation;
-        this.isImage = isImage;
-        this.cardId = cardId;
-    }
+    @Nullable
+    private Boolean isImage;
 
-    public CardDto() {
-    }
 
     public Long getFolderId() {
         return folderId;
@@ -42,19 +41,11 @@ public class CardDto {
         this.textTranslation = textTranslation;
     }
 
-    public boolean getIsImage() {
+    public Boolean getIsImage() {
         return isImage;
     }
 
-    public void setIsImage(boolean image) {
+    public void setIsImage(Boolean image) {
         isImage = image;
-    }
-
-    public Long getCardId() {
-        return cardId;
-    }
-
-    public void setCardId(Long cardId) {
-        this.cardId = cardId;
     }
 }
