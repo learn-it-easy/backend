@@ -34,7 +34,7 @@ public interface CardRepository extends JpaRepository<Card, Long> {
     @Query("DELETE FROM Card c WHERE c.id = :cardId AND c.user = :user")
     int deleteByIdAndUser(@Param("cardId") Long cardId, @Param("user") User user);
 
-    @Query(value = "SELECT * FROM cards WHERE folder_id = :folder_id AND user_id = :user_id ORDER BY id ASC LIMIT :limit OFFSET :offset",
+    @Query(value = "SELECT * FROM cards WHERE folder_id = :folder_id AND user_id = :user_id ORDER BY id DESC LIMIT :limit OFFSET :offset",
             nativeQuery = true)
     List<Card> findByFolderAndUserWithPagination(
             @Param("folder_id") Long folderId,
@@ -44,7 +44,7 @@ public interface CardRepository extends JpaRepository<Card, Long> {
 
     long countByFolderAndUser(Folder folder, User user);
 
-    @Query(value = "SELECT * FROM cards WHERE user_id = :userId ORDER BY id ASC LIMIT :limit OFFSET :offset",
+    @Query(value = "SELECT * FROM cards WHERE user_id = :userId ORDER BY id DESC LIMIT :limit OFFSET :offset",
             nativeQuery = true)
     List<Card> findByUserWithOffsetAndLimit(
             @Param("userId") Long userId,

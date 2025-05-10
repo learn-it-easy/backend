@@ -139,51 +139,61 @@ public class CardService {
     }
 
     @Transactional
-    public ResponseEntity<?> updateCard(Long cardId, CardDto dto, String token, String lang) {
+    public ResponseEntity<?> updateCard(Long cardId, CardPartialUpdateDto dto, String token, String lang) {
 
         try {
             Long currentUserId = jwtUtils.getUserIdFromToken(jwtUtils.cleanToken(token));
             User currentUser = userService.getUserById(currentUserId, lang);
-
             Card card = getCardByIdAndUser(cardId, currentUser, lang);
 
-            if (dto.getIsImage()) {
-                if (!isValidImageLink(dto.getTextTranslation())) {
-                    return ResponseEntity.badRequest().body(new ErrorResponseDto(
-                            "textTranslation",
-                            messageSource.getMessage("card.invalid_image_link", null, Locale.forLanguageTag(lang))
-                    ));
-                }
-                if (oneWordInSentence(dto.getText())) {
-                    dto.setText(ensureHighlightedWords(dto.getText()));
+            if (dto.getText() != null && !dto.getText().isEmpty()) {
+                    if (oneWordInSentence(dto.getText())) {
+                        dto.setText(ensureHighlightedWords(dto.getText()));
+                    } else if (!hasHighlightedWords(dto.getText())) {
+                        return ResponseEntity.badRequest().body(new ErrorResponseDto(
+                                "text",
+                                messageSource.getMessage("card.missing_highlighted_words", null, Locale.forLanguageTag(lang))
+                        ));
+                    }
 
-                } else if (!hasHighlightedWords(dto.getText())) {
-                    return ResponseEntity.badRequest().body(new ErrorResponseDto(
-                            "text",
-                            messageSource.getMessage("card.missing_highlighted_words", null, Locale.forLanguageTag(lang))
-                    ));
-                }
-            } else {
-                if (oneWordInSentence(dto.getText())) {
-                    dto.setText(ensureHighlightedWords(dto.getText()));
+                card.setText(dto.getText());
+                card.setMainWord(extractHighlightedWords(dto.getText()));
+            }
 
+            if (dto.getTextTranslation() != null && !dto.getTextTranslation().isEmpty()) {
+                if (dto.getIsImage() || (!dto.getIsImage() && card.getIsImage())) {
+                    if (!isValidImageLink(dto.getTextTranslation())) {
+                        return ResponseEntity.badRequest().body(new ErrorResponseDto(
+                                "textTranslation",
+                                messageSource.getMessage("card.invalid_image_link", null, Locale.forLanguageTag(lang))
+                        ));
+                    }
+                } else {
+                    if (oneWordInSentence(dto.getTextTranslation())) {
+                        dto.setTextTranslation(ensureHighlightedWords(dto.getTextTranslation()));
+                    }
+                    if (!hasHighlightedWords(dto.getTextTranslation())) {
+                        return ResponseEntity.badRequest().body(new ErrorResponseDto(
+                                "text",
+                                messageSource.getMessage("card.missing_highlighted_words", null, Locale.forLanguageTag(lang))
+                        ));
+                    }
                 }
-                if (oneWordInSentence(dto.getTextTranslation())) {
-                    dto.setTextTranslation(ensureHighlightedWords(dto.getTextTranslation()));
+                card.setTextTranslation(dto.getTextTranslation());
+            }
 
-                }
-                if (!hasHighlightedWords(dto.getText()) || !hasHighlightedWords(dto.getTextTranslation())) {
-                    return ResponseEntity.badRequest().body(new ErrorResponseDto(
-                            "text",
-                            messageSource.getMessage("card.missing_highlighted_words", null, Locale.forLanguageTag(lang))
-                    ));
+            if (dto.getFolderId() != null || (dto.getFolderId() == null && card.getFolder() != null)) {
+                if (dto.getFolderId() == null) {
+                    card.setFolder(null);
+                } else {
+                    Folder folder = folderService.getFolderByUserAndFolderId(currentUser, dto.getFolderId(), lang);
+                    card.setFolder(folder);
                 }
             }
 
-            card.setText(dto.getText());
-            card.setTextTranslation(dto.getTextTranslation());
-            card.setMainWord(extractHighlightedWords(dto.getText()));
-            card.setIsImage(dto.getIsImage());
+            if (dto.getIsImage() != null) {
+                card.setIsImage(dto.getIsImage());
+            }
 
             cardRepository.save(card);
 
@@ -192,14 +202,12 @@ public class CardService {
                     messageSource.getMessage("card.update_success", null, Locale.forLanguageTag(lang))
             ));
 
-
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new ErrorResponseDto("cardId", e.getMessage()));
         }
-
-
     }
+
 
 
     public CardPageDto getAllCardsInFolder(Long folderId, String token, int page, String lang) {
@@ -396,6 +404,7 @@ public class CardService {
         dto.setIsImage(card.getIsImage());
         dto.setText(card.getText());
         dto.setTextTranslation(card.getTextTranslation());
+        dto.setCardId(cardId);
 
         return dto;
     }

@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
+import java.util.List;
 
 @RestController
 @RequestMapping("/folder")
@@ -56,11 +57,20 @@ public class FolderController {
         }
     }
 
+    // Кол-во всех карт и время ближайшего повторения
     @GetMapping("/get/all")
     public AllCardsDto getAllCards(
             @RequestHeader("Authorization") String token,
             @CookieValue(value= CookieUtils.INTERFACE_LANG_COOKIE, defaultValue = CookieUtils.DEFAULT_LANG_FOR_INTERFACE_COOKIE) String lang) {
         return folderService.getAllCards(token, lang);
+    }
+
+    // Вывод всех папок с id текущего юзера
+    @GetMapping("/get/all-folders")
+    public List<FoldersGetAllDto> getAllFolders(
+            @RequestHeader("Authorization") String token,
+            @CookieValue(value= CookieUtils.INTERFACE_LANG_COOKIE, defaultValue = CookieUtils.DEFAULT_LANG_FOR_INTERFACE_COOKIE) String lang) {
+        return folderService.getAllFolders(token, lang);
     }
 
 

@@ -2,10 +2,7 @@ package com.system.learn.service;
 
 import com.system.learn.dto.ErrorResponseDto;
 import com.system.learn.dto.card.ReviewTimeDto;
-import com.system.learn.dto.folder.AllCardsDto;
-import com.system.learn.dto.folder.FolderCreateDto;
-import com.system.learn.dto.folder.FolderGetDto;
-import com.system.learn.dto.folder.FolderPageDto;
+import com.system.learn.dto.folder.*;
 import com.system.learn.entity.Card;
 import com.system.learn.entity.Folder;
 import com.system.learn.entity.User;
@@ -58,6 +55,23 @@ public class FolderService {
         folder.setUser(user);
         folderRepository.save(folder);
         return folder;
+    }
+
+
+    public List<FoldersGetAllDto> getAllFolders(String token, String lang) {
+
+        Long currentUserId = jwtUtils.getUserIdFromToken(jwtUtils.cleanToken(token));
+
+        User user = userService.getUserById(currentUserId, lang);
+
+        List<Folder> folders = folderRepository.findByUser(user);
+        return folders.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
+    private FoldersGetAllDto convertToDto(Folder folder) {
+        return new FoldersGetAllDto(folder.getId(), folder.getName());
     }
 
     public FolderPageDto getUserFolders(String token, int page, String lang) {

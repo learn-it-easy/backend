@@ -4,24 +4,24 @@ import java.time.LocalDateTime;
 
 public class CardGetForFolderDto {
 
-    private Long idCard;
+    private Long cardId;
     private String mainWord;
     private LocalDateTime nextReviewAt;
 
     public CardGetForFolderDto(Long idCard, String mainWord, LocalDateTime nextReviewAt) {
-        this.idCard = idCard;
+        this.cardId = idCard;
         this.mainWord = mainWord;
         this.nextReviewAt = nextReviewAt;
     }
 
     public CardGetForFolderDto() {}
 
-    public Long getIdCard() {
-        return idCard;
+    public Long getCardId() {
+        return cardId;
     }
 
-    public void setIdCard(Long idCard) {
-        this.idCard = idCard;
+    public void setCardId(Long cardId) {
+        this.cardId = cardId;
     }
 
     public String getMainWord() {
