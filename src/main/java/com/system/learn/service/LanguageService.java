@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 
 @Service
 public class LanguageService {
@@ -37,6 +38,17 @@ public class LanguageService {
     public void setNativeLanguage(User user, Long nativeLanguageId, Locale locale){
         user.setNativeLanguage(languageRepository.findById(nativeLanguageId)
                 .orElseThrow(() -> new RuntimeException(messageSource.getMessage("error.not_such_language_in_native", null, locale))));
+    }
+
+    public String getLearningLanguageCodeById(Long learningLanguageId, Locale locale) {
+        Language learningLanguage = languageRepository.findById(learningLanguageId)
+                .orElseThrow(() -> new RuntimeException(messageSource.getMessage("error.not_such_language_in_learning", null, locale)));
+        return learningLanguage.getCode();
+    }
+    public String getNativeLanguageCodeById(Long nativeLanguageId, Locale locale) {
+        Language nativeLanguage = languageRepository.findById(nativeLanguageId)
+                .orElseThrow(() -> new RuntimeException(messageSource.getMessage("error.not_such_language_in_native", null, locale)));
+        return nativeLanguage.getCode();
     }
 
     private LanguageDto convertToDto(Language language) {
