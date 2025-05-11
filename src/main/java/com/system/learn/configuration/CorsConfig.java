@@ -10,6 +10,10 @@ public class CorsConfig implements WebMvcConfigurer {
 
     @Value("${app.frontend.url}")
     private String frontendUrl;
+
+    @Value("${api.translate}")
+    private String apiTranslateUrl;
+
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")

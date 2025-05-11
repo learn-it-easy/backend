@@ -7,6 +7,8 @@ import com.system.learn.service.ProfileService;
 import com.system.learn.utils.CookieUtils;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -31,15 +33,24 @@ public class ProfileController {
     }
 
     @PatchMapping
-    public AuthResponseDto updateCurrentUserProfile(
+    public ResponseEntity<AuthResponseDto> updateCurrentUserProfile(
             @Valid @RequestBody UserProfileChangeDto profileChangeDto,
             @RequestHeader("Authorization") String token,
-            @CookieValue(value= CookieUtils.INTERFACE_LANG_COOKIE, defaultValue = CookieUtils.DEFAULT_LANG_FOR_INTERFACE_COOKIE) String lang,
+            @CookieValue(value = CookieUtils.INTERFACE_LANG_COOKIE, defaultValue = CookieUtils.DEFAULT_LANG_FOR_INTERFACE_COOKIE) String lang,
             HttpServletResponse response) {
 
-        cookieUtils.addLanguageCookies(response, token);
-        return profileService.changeProfile(profileChangeDto, token, lang);
+        AuthResponseDto dto = profileService.changeProfile(profileChangeDto, token, lang);
 
+        cookieUtils.changeLanguageCookies(
+                response,
+                profileChangeDto.getNativeLanguageId(),
+                profileChangeDto.getLearningLanguageId(),
+                lang
+        );
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, response.getHeader(HttpHeaders.SET_COOKIE))
+                .body(dto);
     }
 
 }
