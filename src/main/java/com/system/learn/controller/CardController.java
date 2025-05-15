@@ -25,7 +25,7 @@ public class CardController {
                 @RequestHeader("Authorization") String token,
                 @CookieValue(value= CookieUtils.INTERFACE_LANG_COOKIE, defaultValue = CookieUtils.DEFAULT_LANG_FOR_INTERFACE_COOKIE) String lang) {
 
-        return cardService.createCard(cardCreateDto, token, lang);
+        return cardService.createCardWithoutCheckIsImage(cardCreateDto, token, lang);
     }
 
     @DeleteMapping("/delete")
@@ -44,7 +44,7 @@ public class CardController {
             @RequestHeader("Authorization") String token,
             @CookieValue(value= CookieUtils.INTERFACE_LANG_COOKIE, defaultValue = CookieUtils.DEFAULT_LANG_FOR_INTERFACE_COOKIE) String lang) {
 
-        return cardService.updateCard(Long.valueOf(cardId), cardDto, token, lang);
+        return cardService.updateCardWithoutCheckIsImage(Long.valueOf(cardId), cardDto, token, lang);
     }
 
 
