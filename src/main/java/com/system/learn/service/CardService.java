@@ -113,6 +113,66 @@ public class CardService {
                         Locale.forLanguageTag(lang))));
     }
 
+
+    public ResponseEntity<?> createCardWithoutCheckIsImage(
+            CardDto cardCreateDto,
+            String token,
+            String lang) {
+
+        Long currentUserId = jwtUtils.getUserIdFromToken(jwtUtils.cleanToken(token));
+        User user = userService.getUserById(currentUserId, lang);
+        Card card = new Card();
+
+        if (cardCreateDto.getFolderId() != null) {
+            Folder folder = folderService.getFolderByUserAndFolderId(user, cardCreateDto.getFolderId(), lang);
+            card.setFolder(folder);
+        } else {
+            card.setFolder(null);
+        }
+
+        if (cardCreateDto.getIsImage()) {
+            if (oneWordInSentence(cardCreateDto.getText())) {
+                cardCreateDto.setText(ensureHighlightedWords(cardCreateDto.getText()));
+
+            } else if (!hasHighlightedWords(cardCreateDto.getText())) {
+                return ResponseEntity.badRequest().body(new ErrorResponseDto(
+                        "text",
+                        messageSource.getMessage("card.missing_highlighted_words", null, Locale.forLanguageTag(lang))
+                ));
+            }
+        } else {
+            if (oneWordInSentence(cardCreateDto.getText())) {
+                cardCreateDto.setText(ensureHighlightedWords(cardCreateDto.getText()));
+
+            }
+            if (oneWordInSentence(cardCreateDto.getTextTranslation())) {
+                cardCreateDto.setTextTranslation(ensureHighlightedWords(cardCreateDto.getTextTranslation()));
+
+            }
+            if (!hasHighlightedWords(cardCreateDto.getText()) || !hasHighlightedWords(cardCreateDto.getTextTranslation())) {
+                return ResponseEntity.badRequest().body(new ErrorResponseDto(
+                        "text",
+                        messageSource.getMessage("card.missing_highlighted_words", null, Locale.forLanguageTag(lang))
+                ));
+            }
+        }
+
+        card.setUser(user);
+        card.setText(cardCreateDto.getText());
+        card.setTextTranslation(cardCreateDto.getTextTranslation());
+        card.setMainWord(extractHighlightedWords(cardCreateDto.getText()));
+        card.setIsImage(cardCreateDto.getIsImage());
+        card.setLastReviewedAt(null);
+        card.setNextReviewAt(LocalDateTime.now());
+
+        cardRepository.save(card);
+
+        return ResponseEntity.ok(new ErrorResponseDto(null,
+                messageSource.getMessage("card.created_success",
+                        null,
+                        Locale.forLanguageTag(lang))));
+    }
+
     @Transactional
     public ResponseEntity<?> deleteCard(
             Long cardId,
@@ -181,6 +241,57 @@ public class CardService {
                 }
                 card.setTextTranslation(dto.getTextTranslation());
             }
+
+            if (dto.getFolderId() != null || (dto.getFolderId() == null && card.getFolder() != null)) {
+                if (dto.getFolderId() == null) {
+                    card.setFolder(null);
+                } else {
+                    Folder folder = folderService.getFolderByUserAndFolderId(currentUser, dto.getFolderId(), lang);
+                    card.setFolder(folder);
+                }
+            }
+
+            if (dto.getIsImage() != null) {
+                card.setIsImage(dto.getIsImage());
+            }
+
+            cardRepository.save(card);
+
+            return ResponseEntity.ok(new ErrorResponseDto(
+                    null,
+                    messageSource.getMessage("card.update_success", null, Locale.forLanguageTag(lang))
+            ));
+
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ErrorResponseDto("cardId", e.getMessage()));
+        }
+    }
+
+    @Transactional
+    public ResponseEntity<?> updateCardWithoutCheckIsImage(Long cardId, CardPartialUpdateDto dto, String token, String lang) {
+
+        try {
+            Long currentUserId = jwtUtils.getUserIdFromToken(jwtUtils.cleanToken(token));
+            User currentUser = userService.getUserById(currentUserId, lang);
+            Card card = getCardByIdAndUser(cardId, currentUser, lang);
+
+            if (dto.getText() != null && !dto.getText().isEmpty()) {
+                if (oneWordInSentence(dto.getText())) {
+                    dto.setText(ensureHighlightedWords(dto.getText()));
+                } else if (!hasHighlightedWords(dto.getText())) {
+                    return ResponseEntity.badRequest().body(new ErrorResponseDto(
+                            "text",
+                            messageSource.getMessage("card.missing_highlighted_words", null, Locale.forLanguageTag(lang))
+                    ));
+                }
+
+                card.setText(dto.getText());
+                card.setMainWord(extractHighlightedWords(dto.getText()));
+            }
+
+
+            card.setTextTranslation(dto.getTextTranslation());
 
             if (dto.getFolderId() != null || (dto.getFolderId() == null && card.getFolder() != null)) {
                 if (dto.getFolderId() == null) {
