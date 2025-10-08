@@ -162,7 +162,7 @@ public class FolderService {
     }
 
 
-    public AllCardsDto getAllCards(String token, String lang) {
+    public AllCardsDto getQuantityAndNearestReviewFromAllFolders(String token, String lang) {
         Locale locale = Locale.forLanguageTag(lang);
         Long userId = jwtUtils.getUserIdFromToken(jwtUtils.cleanToken(token));
 

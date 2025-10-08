@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/languages")
+@RequestMapping("/api/v1/languages")
 public class LanguageController {
 
 
@@ -25,13 +25,14 @@ public class LanguageController {
         this.cookieUtils = cookieUtils;
     }
 
-
+    // получение всех доступных языков
     @GetMapping("/all")
     public List<LanguageDto> getAllLanguages() {
             return languageService.getAllLanguages();
         }
 
-
+    // это вообще нужно переделать на что-то такое RequestHeader(value = "Accept-Language"
+    // не помню зачем я делал через куки
     @GetMapping("/language-cookie")
     public ResponseEntity<?> getCookie(
             @RequestHeader("Authorization") String token,

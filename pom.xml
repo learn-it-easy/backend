@@ -32,6 +32,8 @@
 		<jjwt.version>0.11.5</jjwt.version>
 		<javax-servlet.version>4.0.1</javax-servlet.version>
 		<security.version>3.4.2</security.version>
+		<maven.compiler.source>17</maven.compiler.source>
+		<maven.compiler.target>17</maven.compiler.target>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -104,6 +106,7 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+				<version>3.4.4</version>
 			</plugin>
 		</plugins>
 	</build>

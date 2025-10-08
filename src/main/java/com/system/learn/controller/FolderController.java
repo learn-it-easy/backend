@@ -12,7 +12,7 @@ import java.util.Collections;
 import java.util.List;
 
 @RestController
-@RequestMapping("/folder")
+@RequestMapping("/api/v1/folders")
 public class FolderController {
 
     private final FolderService folderService;
@@ -22,8 +22,8 @@ public class FolderController {
     }
 
 
-
-    @PostMapping("/create")
+    // создание папки
+    @PostMapping("/")
     public ResponseEntity<FolderIdResponse> createFolder(
             @RequestBody FolderCreateDto folderCreateDto,
             @RequestHeader("Authorization") String token,
@@ -35,8 +35,8 @@ public class FolderController {
         return ResponseEntity.ok(new FolderIdResponse(createdFolder.getId(), createdFolder.getName()));
     }
 
-
-    @PostMapping("/get")
+    // получение всех папок постранично
+    @GetMapping("/")
     public ResponseEntity<?> getFoldersPaginated(
             @RequestHeader("Authorization") String token,
             @RequestParam(defaultValue = "1") int page,
@@ -57,41 +57,43 @@ public class FolderController {
         }
     }
 
-    // Кол-во всех карт и время ближайшего повторения
-    @GetMapping("/get/all")
-    public AllCardsDto getAllCards(
+    // удаление папки
+    @DeleteMapping("/{folderId}")
+    public ResponseEntity<?> deleteFolder(
+            @PathVariable Long folderId,
             @RequestHeader("Authorization") String token,
             @CookieValue(value= CookieUtils.INTERFACE_LANG_COOKIE, defaultValue = CookieUtils.DEFAULT_LANG_FOR_INTERFACE_COOKIE) String lang) {
-        return folderService.getAllCards(token, lang);
+
+        return folderService.deleteUserFolder(folderId, token, lang);
     }
 
-    // Вывод всех папок с id текущего юзера
-    @GetMapping("/get/all-folders")
+    // изменение названия папки
+    @PatchMapping("/{folderId}")
+    public ResponseEntity<?> changeNameFolder(
+            @PathVariable Long folderId,
+            @RequestBody FolderCreateDto folderCreateDto,
+            @RequestHeader("Authorization") String token,
+            @CookieValue(value= CookieUtils.INTERFACE_LANG_COOKIE, defaultValue = CookieUtils.DEFAULT_LANG_FOR_INTERFACE_COOKIE) String lang) {
+
+        return folderService.changeNameOfFolder(folderId, folderCreateDto, token, lang);
+    }
+
+    // Кол-во всех карт и время ближайшей для повторения карточки
+    @GetMapping("/stats-all")
+    public AllCardsDto getQuantityAndNearestReviewFromAllFolders(
+            @RequestHeader("Authorization") String token,
+            @CookieValue(value= CookieUtils.INTERFACE_LANG_COOKIE, defaultValue = CookieUtils.DEFAULT_LANG_FOR_INTERFACE_COOKIE) String lang) {
+        return folderService.getQuantityAndNearestReviewFromAllFolders(token, lang);
+    }
+
+    // Вывод всех папок для текущего юзера
+    @GetMapping("/all")
     public List<FoldersGetAllDto> getAllFolders(
             @RequestHeader("Authorization") String token,
             @CookieValue(value= CookieUtils.INTERFACE_LANG_COOKIE, defaultValue = CookieUtils.DEFAULT_LANG_FOR_INTERFACE_COOKIE) String lang) {
         return folderService.getAllFolders(token, lang);
     }
 
-
-    @DeleteMapping("/delete")
-    public ResponseEntity<?> deleteFolder(
-            @RequestParam int folderId,
-            @RequestHeader("Authorization") String token,
-            @CookieValue(value= CookieUtils.INTERFACE_LANG_COOKIE, defaultValue = CookieUtils.DEFAULT_LANG_FOR_INTERFACE_COOKIE) String lang) {
-
-            return folderService.deleteUserFolder(Long.valueOf(folderId), token, lang);
-    }
-
-    @PatchMapping("/changeName")
-    public ResponseEntity<?> changeNameFolder(
-            @RequestParam int folderId,
-            @RequestBody FolderCreateDto folderCreateDto,
-            @RequestHeader("Authorization") String token,
-            @CookieValue(value= CookieUtils.INTERFACE_LANG_COOKIE, defaultValue = CookieUtils.DEFAULT_LANG_FOR_INTERFACE_COOKIE) String lang) {
-
-        return folderService.changeNameOfFolder(Long.valueOf(folderId), folderCreateDto, token, lang);
-    }
 
 
 }
