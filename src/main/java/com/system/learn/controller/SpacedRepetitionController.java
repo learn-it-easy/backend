@@ -7,7 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/space-repetition")
+@RequestMapping("/api/v1/space-repetition")
 public class SpacedRepetitionController {
 
    private final SpacedRepetitionService spacedRepetitionService;

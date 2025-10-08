@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 
 @RestController
-@RequestMapping("/card")
+@RequestMapping("/api/v1/cards")
 public class CardController {
 
     private final CardService cardService;
@@ -19,7 +19,7 @@ public class CardController {
         this.cardService = cardService;
     }
 
-    @PostMapping("/create")
+    @PostMapping("/")
     public ResponseEntity<?> createCard(
                 @RequestBody CardDto cardCreateDto,
                 @RequestHeader("Authorization") String token,
@@ -28,45 +28,47 @@ public class CardController {
         return cardService.createCardWithoutCheckIsImage(cardCreateDto, token, lang);
     }
 
-    @DeleteMapping("/delete")
+    @DeleteMapping("/{cardId}")
     public ResponseEntity<?> deleteCard(
-            @RequestParam int cardId,
+            @PathVariable Long cardId,
             @RequestHeader("Authorization") String token,
             @CookieValue(value= CookieUtils.INTERFACE_LANG_COOKIE, defaultValue = CookieUtils.DEFAULT_LANG_FOR_INTERFACE_COOKIE) String lang) {
 
-        return cardService.deleteCard(Long.valueOf(cardId), token, lang);
+        return cardService.deleteCard(cardId, token, lang);
     }
 
-    @PatchMapping("/update")
+    @PatchMapping("/{cardId}")
     public ResponseEntity<?> updateCard(
+            @PathVariable Long cardId,
             @RequestBody CardPartialUpdateDto cardDto,
-            @RequestParam int cardId,
             @RequestHeader("Authorization") String token,
             @CookieValue(value= CookieUtils.INTERFACE_LANG_COOKIE, defaultValue = CookieUtils.DEFAULT_LANG_FOR_INTERFACE_COOKIE) String lang) {
 
-        return cardService.updateCardWithoutCheckIsImage(Long.valueOf(cardId), cardDto, token, lang);
+        return cardService.updateCardWithoutCheckIsImage(cardId, cardDto, token, lang);
     }
 
 
-    @PostMapping("/get")
+    @GetMapping("/{cardId}")
     public CardDto getCard(
-            @RequestParam Long cardId,
+            @PathVariable Long cardId,
             @RequestHeader("Authorization") String token,
             @CookieValue(value= CookieUtils.INTERFACE_LANG_COOKIE, defaultValue = CookieUtils.DEFAULT_LANG_FOR_INTERFACE_COOKIE) String lang) {
 
         return cardService.getCard(cardId, token, lang);
     }
 
-    @GetMapping("/get/review-folder")
+    // получение следующей для повторения карточки из папки
+    @GetMapping("/review/folders/{folderId}")
     public ResponseEntity<?> getNextCardForReviewFromFolder(
-            @RequestParam int folderId,
+            @PathVariable Long folderId,
             @RequestHeader("Authorization") String token,
             @CookieValue(value= CookieUtils.INTERFACE_LANG_COOKIE, defaultValue = CookieUtils.DEFAULT_LANG_FOR_INTERFACE_COOKIE) String lang) {
 
-        return cardService.getNextCardForReviewFromFolder(Long.valueOf(folderId), token, lang);
+        return cardService.getNextCardForReviewFromFolder(folderId, token, lang);
     }
 
-    @GetMapping("/get/review-all")
+    // получение следующей для повторения карточки из всех папок
+    @GetMapping("/review")
     public ResponseEntity<?> getNextCardForReviewAll(
             @RequestHeader("Authorization") String token,
             @CookieValue(value= CookieUtils.INTERFACE_LANG_COOKIE, defaultValue = CookieUtils.DEFAULT_LANG_FOR_INTERFACE_COOKIE) String lang) {
@@ -74,8 +76,8 @@ public class CardController {
         return cardService.getNextCardForReviewAll(token, lang);
     }
 
-
-    @GetMapping("/get/all")
+    // получения карточек из всех папок
+    @GetMapping("/")
     public CardPageDto getAllCards(
             @RequestHeader("Authorization") String token,
             @CookieValue(value= CookieUtils.INTERFACE_LANG_COOKIE, defaultValue = CookieUtils.DEFAULT_LANG_FOR_INTERFACE_COOKIE) String lang,
@@ -84,15 +86,15 @@ public class CardController {
         return cardService.getAllCards(token, page, lang);
     }
 
-
-    @PostMapping("/from-folder")
+    // получение всех карт из папки
+    @GetMapping("/folders/{folderId}")
     public CardPageDto getAllCardsFromFolder(
-            @RequestParam int folderId,
+            @PathVariable Long folderId,
             @RequestHeader("Authorization") String token,
             @CookieValue(value= CookieUtils.INTERFACE_LANG_COOKIE, defaultValue = CookieUtils.DEFAULT_LANG_FOR_INTERFACE_COOKIE) String lang,
             @RequestParam(defaultValue = "1") int page) {
 
-        return cardService.getAllCardsInFolder(Long.valueOf(folderId), token, page, lang);
+        return cardService.getAllCardsInFolder(folderId, token, page, lang);
     }
 
 
