@@ -1,0 +1,1703 @@
+openapi: 3.0.0
+info:
+  title: System Learn API
+  version: 1.0.0
+  description: API для системы по запоминанию иностранных слов
+  contact:
+    name: API Support
+    email: support@systemlearn.com
+
+servers:
+  - url: http://localhost:8080
+    description: Backend Developement server
+  - url: https://api.systemlearn.com
+    description: Production server
+
+tags:
+  - name: Authentication
+    description: API для аутентификации и регистрации пользователей
+  - name: Cards
+    description: API для взаимодействия с сущностями карточек для повторения
+  - name: Folders
+    description: API для взаимодействия с сущностями папок
+  - name: Languages
+    description: API для работы с существующими в приложении языками
+  - name: Profile
+    description: API для изменения данных пользователя
+  - name: Spaced Repetition
+    description: API для работы логикой повторения карточек 
+  - name: Translate
+    description: API для перевода
+  - name: Pictures
+    description: API для подбора изображений
+  - name: Context
+    description: API для подбора контекстных предложений
+  - name: Sublitles
+    description: API для скачивания и передачи субтитров из YouTube
+
+paths:
+  /api/v1/auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Регистрация пользователя
+      description: Создает нового пользователя в системе и возвращает JWT токен для аутентификации
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegistrationDto'
+            example:
+              username: "user"
+              email: "user@example.com"
+              password: "password123"
+              learningLanguageId: 1
+              nativeLanguageId: 2
+      responses:
+        '200':
+          description: Успешная регистрация
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponseDto'
+              example:
+                token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        '400':
+          description: Ошибка регистрации пользователя
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                usernameExists:
+                  summary: Пользователь с таким username уже существует
+                  value:
+                    field: "null"
+                    message: "Пользователь с таким username уже существует"
+                emailExists:
+                  summary: Пользователь с такой почтой уже существует
+                  value:
+                    field: "null"
+                    message: "Пользователь с такой почтой уже существует"
+                learningLanguageIsNotExists:
+                  summary: Не существует изучаемого языка с таким id
+                  value:
+                    field: "null"
+                    message: "Нет такого языка в поле изучаемый язык"
+                nativeLanguageIsNotExists:
+                  summary: Не существует родного языка с таким id
+                  value:
+                    field: "null"
+                    message: "Нет такого языка в поле родной язык"
+
+  /api/v1/auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Аутентификация пользователя
+      description: Вход пользователя в систему и получение JWT токена
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequestDto'
+            example:
+              username: "user"
+              password: "password123"
+      responses:
+        '200':
+          description: Успешная аутентификация
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponseDto'
+              example:
+                token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        '400':
+          description: Ошибка аутентификации пользователя
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                usernameIsNotExists:
+                  summary: Пользователь с таким username не найден
+                  value:
+                    field: "null"
+                    message: "Пользователь с таким username не найден"
+                incorrectPassword:
+                   summary: Введён неверный пароль
+                   value:
+                      field: "null"
+                      message: "Неверный пароль"
+  
+  /api/v1/cards/:
+    post:
+      tags:
+        - Cards
+      summary: Создание новой карточки
+      description: Создает новую карточку для обучения
+      operationId: createCard
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          description: JWT токен аутентификации
+          schema:
+            type: string
+          example: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        - name: lang
+          in: cookie
+          required: false
+          description: Язык интерфейса
+          schema:
+            type: string
+            default: "en"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CardDto'
+            example:
+              frontSide: "Hello"
+              backSide: "Привет"
+              folderId: 1
+      responses:
+        '200':
+          description: Карточка успешно создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CardDto'
+        '400':
+          description: Ошибка при создании карточки
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidData:
+                  summary: Неверные данные карточки
+                  value:
+                    field: "frontSide"
+                    message: "Поле frontSide не может быть пустым"
+                folderNotFound:
+                  summary: Папка не найдена
+                  value:
+                    field: "folderId"
+                    message: "Папка с указанным ID не найдена"
+        '401':
+          description: Пользователь не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    get:
+      tags:
+        - Cards
+      summary: Получение всех карточек
+      description: Возвращает пагинированный список всех карточек пользователя
+      operationId: getAllCards
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          description: JWT токен аутентификации
+          schema:
+            type: string
+          example: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        - name: lang
+          in: cookie
+          required: false
+          description: Язык интерфейса
+          schema:
+            type: string
+            default: "en"
+        - name: page
+          in: query
+          required: false
+          description: Номер страницы для пагинации
+          schema:
+            type: integer
+            default: 1
+      responses:
+        '200':
+          description: Успешное получение карточек
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CardPageDto'
+        '401':
+          description: Пользователь не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/cards/{cardId}:
+    get:
+      tags:
+        - Cards
+      summary: Получение карточки по ID
+      description: Возвращает информацию о конкретной карточке
+      operationId: getCard
+      parameters:
+        - name: cardId
+          in: path
+          required: true
+          description: ID карточки
+          schema:
+            type: integer
+        - name: Authorization
+          in: header
+          required: true
+          description: JWT токен аутентификации
+          schema:
+            type: string
+          example: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        - name: lang
+          in: cookie
+          required: false
+          description: Язык интерфейса
+          schema:
+            type: string
+            default: "en"
+      responses:
+        '200':
+          description: Успешное получение карточки
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CardDto'
+        '404':
+          description: Карточка не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                field: "cardId"
+                message: "Карточка с указанным ID не найдена"
+        '401':
+          description: Пользователь не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags:
+        - Cards
+      summary: Удаление карточки
+      description: Удаляет карточку по указанному ID
+      operationId: deleteCard
+      parameters:
+        - name: cardId
+          in: path
+          required: true
+          description: ID карточки для удаления
+          schema:
+            type: integer
+        - name: Authorization
+          in: header
+          required: true
+          description: JWT токен аутентификации
+          schema:
+            type: string
+          example: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        - name: lang
+          in: cookie
+          required: false
+          description: Язык интерфейса
+          schema:
+            type: string
+            default: "en"
+      responses:
+        '200':
+          description: Карточка успешно удалена
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Карточка успешно удалена"
+        '404':
+          description: Карточка не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Пользователь не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    patch:
+      tags:
+        - Cards
+      summary: Частичное обновление карточки
+      description: Обновляет указанные поля карточки
+      operationId: updateCard
+      parameters:
+        - name: cardId
+          in: path
+          required: true
+          description: ID карточки для обновления
+          schema:
+            type: integer
+        - name: Authorization
+          in: header
+          required: true
+          description: JWT токен аутентификации
+          schema:
+            type: string
+          example: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        - name: lang
+          in: cookie
+          required: false
+          description: Язык интерфейса
+          schema:
+            type: string
+            default: "en"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CardPartialUpdateDto'
+            example:
+              frontSide: "Good morning"
+              backSide: "Доброе утро"
+      responses:
+        '200':
+          description: Карточка успешно обновлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CardDto'
+        '404':
+          description: Карточка не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '400':
+          description: Ошибка валидации данных
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Пользователь не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/cards/review/folders/{folderId}:
+    get:
+      tags:
+        - Cards
+        - Review
+      summary: Получение следующей карточки для повторения из папки
+      description: Возвращает следующую карточку для повторения из указанной папки
+      operationId: getNextCardForReviewFromFolder
+      parameters:
+        - name: folderId
+          in: path
+          required: true
+          description: ID папки
+          schema:
+            type: integer
+        - name: Authorization
+          in: header
+          required: true
+          description: JWT токен аутентификации
+          schema:
+            type: string
+          example: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        - name: lang
+          in: cookie
+          required: false
+          description: Язык интерфейса
+          schema:
+            type: string
+            default: "en"
+      responses:
+        '200':
+          description: Успешное получение карточки для повторения
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CardDto'
+        '404':
+          description: Карточки для повторения не найдены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                field: "folderId"
+                message: "В указанной папке нет карточек для повторения"
+        '401':
+          description: Пользователь не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/cards/review:
+    get:
+      tags:
+        - Cards
+        - Review
+      summary: Получение следующей карточки для повторения из всех папок
+      description: Возвращает следующую карточку для повторения из всех папок пользователя
+      operationId: getNextCardForReviewAll
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          description: JWT токен аутентификации
+          schema:
+            type: string
+          example: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        - name: lang
+          in: cookie
+          required: false
+          description: Язык интерфейса
+          schema:
+            type: string
+            default: "en"
+      responses:
+        '200':
+          description: Успешное получение карточки для повторения
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CardDto'
+        '404':
+          description: Карточки для повторения не найдены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                field: "null"
+                message: "Нет карточек для повторения"
+        '401':
+          description: Пользователь не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/cards/folders/{folderId}:
+    get:
+      tags:
+        - Cards
+      summary: Получение всех карточек из папки
+      description: Возвращает пагинированный список всех карточек из указанной папки
+      operationId: getAllCardsFromFolder
+      parameters:
+        - name: folderId
+          in: path
+          required: true
+          description: ID папки
+          schema:
+            type: integer
+        - name: Authorization
+          in: header
+          required: true
+          description: JWT токен аутентификации
+          schema:
+            type: string
+          example: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        - name: lang
+          in: cookie
+          required: false
+          description: Язык интерфейса
+          schema:
+            type: string
+            default: "en"
+        - name: page
+          in: query
+          required: false
+          description: Номер страницы для пагинации
+          schema:
+            type: integer
+            default: 1
+      responses:
+        '200':
+          description: Успешное получение карточек
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CardPageDto'
+        '404':
+          description: Папка не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Пользователь не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/folders/:
+    post:
+      tags:
+        - Folders
+      summary: Создание новой папки
+      description: Создает новую папку для карточек
+      operationId: createFolder
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          description: JWT токен аутентификации
+          schema:
+            type: string
+          example: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        - name: lang
+          in: cookie
+          required: false
+          description: Язык интерфейса
+          schema:
+            type: string
+            default: "en"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FolderCreateDto'
+            example:
+              name: "Новая папка"
+      responses:
+        '200':
+          description: Папка успешно создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FolderIdResponse'
+              example:
+                id: 1
+                name: "Новая папка"
+        '400':
+          description: Ошибка при создании папки
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Пользователь не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    get:
+      tags:
+        - Folders
+      summary: Получение всех папок (постранично)
+      description: Возвращает пагинированный список всех папок пользователя
+      operationId: getFoldersPaginated
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          description: JWT токен аутентификации
+          schema:
+            type: string
+          example: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        - name: page
+          in: query
+          required: false
+          description: Номер страницы для пагинации
+          schema:
+            type: integer
+            default: 1
+        - name: lang
+          in: cookie
+          required: false
+          description: Язык интерфейса
+          schema:
+            type: string
+            default: "en"
+      responses:
+        '200':
+          description: Успешное получение папок
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FolderPageDto'
+        '401':
+          description: Пользователь не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/folders/{folderId}:
+    delete:
+      tags:
+        - Folders
+      summary: Удаление папки
+      description: Удаляет папку по указанному ID
+      operationId: deleteFolder
+      parameters:
+        - name: folderId
+          in: path
+          required: true
+          description: ID папки для удаления
+          schema:
+            type: integer
+        - name: Authorization
+          in: header
+          required: true
+          description: JWT токен аутентификации
+          schema:
+            type: string
+          example: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        - name: lang
+          in: cookie
+          required: false
+          description: Язык интерфейса
+          schema:
+            type: string
+            default: "en"
+      responses:
+        '200':
+          description: Папка успешно удалена
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Папка успешно удалена"
+        '404':
+          description: Папка не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Пользователь не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    patch:
+      tags:
+        - Folders
+      summary: Изменение названия папки
+      description: Обновляет название папки
+      operationId: changeNameFolder
+      parameters:
+        - name: folderId
+          in: path
+          required: true
+          description: ID папки для изменения
+          schema:
+            type: integer
+        - name: Authorization
+          in: header
+          required: true
+          description: JWT токен аутентификации
+          schema:
+            type: string
+          example: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        - name: lang
+          in: cookie
+          required: false
+          description: Язык интерфейса
+          schema:
+            type: string
+            default: "en"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FolderCreateDto'
+            example:
+              name: "Обновленное название папки"
+      responses:
+        '200':
+          description: Название папки успешно изменено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Название папки успешно изменено"
+        '404':
+          description: Папка не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Пользователь не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/folders/stats-all:
+    get:
+      tags:
+        - Folders
+        - Statistics
+      summary: Статистика по всем карточкам
+      description: Возвращает количество всех карточек и время ближайшего повторения
+      operationId: getQuantityAndNearestReviewFromAllFolders
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          description: JWT токен аутентификации
+          schema:
+            type: string
+          example: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        - name: lang
+          in: cookie
+          required: false
+          description: Язык интерфейса
+          schema:
+            type: string
+            default: "en"
+      responses:
+        '200':
+          description: Успешное получение статистики
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllCardsDto'
+        '401':
+          description: Пользователь не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/folders/all:
+    get:
+      tags:
+        - Folders
+      summary: Получение всех папок пользователя
+      description: Возвращает полный список всех папок пользователя (без пагинации)
+      operationId: getAllFolders
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          description: JWT токен аутентификации
+          schema:
+            type: string
+          example: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        - name: lang
+          in: cookie
+          required: false
+          description: Язык интерфейса
+          schema:
+            type: string
+            default: "en"
+      responses:
+        '200':
+          description: Успешное получение всех папок
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FoldersGetAllDto'
+        '401':
+          description: Пользователь не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/languages/all:
+    get:
+      tags:
+        - Languages
+      summary: Получение всех доступных языков
+      description: Возвращает список всех языков, доступных в системе для изучения
+      operationId: getAllLanguages
+      responses:
+        '200':
+          description: Успешное получение списка языков
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LanguageDto'
+              example:
+                - id: 1
+                  name: "English"
+                  code: "en"
+                - id: 2
+                  name: "Russian"
+                  code: "ru"
+                - id: 3
+                  name: "Spanish"
+                  code: "es"
+
+  /api/v1/languages/language-cookie:
+    get:
+      tags:
+        - Languages
+        - Authentication
+      summary: Установка языковой куки
+      description: Устанавливает куки с языком интерфейса на основе предпочтений пользователя
+      operationId: getCookie
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          description: JWT токен аутентификации
+          schema:
+            type: string
+          example: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+      responses:
+        '200':
+          description: Языковая кука успешно установлена
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Пустой ответ - успех определяется установкой куки
+        '401':
+          description: Пользователь не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/profile:
+    get:
+      tags:
+        - Profile
+      summary: Получение профиля пользователя
+      description: Возвращает информацию о текущем пользователе
+      operationId: getUserProfile
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          description: JWT токен аутентификации
+          schema:
+            type: string
+          example: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        - name: lang
+          in: cookie
+          required: false
+          description: Язык интерфейса
+          schema:
+            type: string
+            default: "en"
+      responses:
+        '200':
+          description: Успешное получение профиля
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfileDto'
+              example:
+                username: "user123"
+                email: "user@example.com"
+                learningLanguageId: 1
+                nativeLanguageId: 2
+        '401':
+          description: Пользователь не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    patch:
+      tags:
+        - Profile
+      summary: Обновление профиля пользователя
+      description: Обновляет информацию профиля пользователя и возвращает новый JWT токен
+      operationId: updateCurrentUserProfile
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          description: JWT токен аутентификации
+          schema:
+            type: string
+          example: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        - name: lang
+          in: cookie
+          required: false
+          description: Язык интерфейса
+          schema:
+            type: string
+            default: "en"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserProfileChangeDto'
+            example:
+              username: "new_username"
+              email: "new_email@example.com"
+              password: "new_password123"
+              learningLanguageId: 3
+              nativeLanguageId: 4
+      responses:
+        '200':
+          description: Профиль успешно обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponseDto'
+              example:
+                token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          headers:
+            Set-Cookie:
+              description: Обновленные языковые куки
+              schema:
+                type: string
+        '400':
+          description: Ошибка валидации данных
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                emailExists:
+                  summary: Пользователь с такой почтой уже существует
+                  value:
+                    field: "email"
+                    message: "Пользователь с такой почтой уже существует"
+                usernameExists:
+                  summary: Пользователь с таким username уже существует
+                  value:
+                    field: "username"
+                    message: "Пользователь с таким username уже существует"
+                languageNotFound:
+                  summary: Указанный язык не существует
+                  value:
+                    field: "learningLanguageId"
+                    message: "Язык с указанным ID не найден"
+        '401':
+          description: Пользователь не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/space-repetition:
+    post:
+      tags:
+        - Spaced Repetition
+      summary: Обработка повторения карточки
+      description: Обрабатывает результат повторения карточки по системе интервальных повторений и обновляет расписание следующего показа
+      operationId: processCardReview
+      parameters:
+        - name: cardId
+          in: query
+          required: true
+          description: ID карточки для повторения
+          schema:
+            type: integer
+            example: 123
+        - name: difficulty
+          in: query
+          required: true
+          description: Уровень сложности, с которой пользователь вспомнил карточку
+          schema:
+            type: string
+            enum: [ "easy", "medium", "hard" ]
+            example: "medium"
+        - name: Authorization
+          in: header
+          required: true
+          description: JWT токен аутентификации
+          schema:
+            type: string
+          example: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        - name: lang
+          in: cookie
+          required: false
+          description: Язык интерфейса
+          schema:
+            type: string
+            default: "ru"
+      responses:
+        '200':
+          description: Повторение успешно обработано
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Повторение карточки успешно обработано"
+                  nextReviewDate:
+                    type: string
+                    format: date-time
+                    description: Дата следующего повторения карточки
+                    example: "2024-01-20T14:30:00Z"
+              example:
+                message: "Повторение карточки успешно обработано"
+                nextReviewDate: "2024-01-20T14:30:00Z"
+        '400':
+          description: Ошибка в данных запроса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidDifficulty:
+                  summary: Неверный уровень сложности
+                  value:
+                    field: "difficulty"
+                    message: "Уровень сложности должен быть одним из: easy, medium, hard"
+                cardNotFound:
+                  summary: Карточка не найдена
+                  value:
+                    field: "cardId"
+                    message: "Карточка с указанным ID не найдена"
+                cardNotForReview:
+                  summary: Карточка не готова для повторения
+                  value:
+                    field: "cardId"
+                    message: "Карточка еще не готова для повторения"
+        '401':
+          description: Пользователь не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Нет доступа к карточке
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                field: "cardId"
+                message: "У вас нет доступа к этой карточке"
+
+  /api/v1/utils/validate-token:
+      get:
+        tags:
+          - Authentication
+        summary: Валидация JWT токена
+        description: Проверяет валидность и срок действия JWT токена
+        operationId: validateToken
+        parameters:
+          - name: Authorization
+            in: header
+            required: true
+            description: JWT токен аутентификации в формате "Bearer {token}"
+            schema:
+              type: string
+            example: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        responses:
+          '200':
+            description: Токен валиден
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    valid:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: "Token is valid"
+                    username:
+                      type: string
+                      description: Имя пользователя из токена
+                      example: "user123"
+                    expiresAt:
+                      type: string
+                      format: date-time
+                      description: Время истечения токена
+                      example: "2024-01-20T10:30:00Z"
+                example:
+                  valid: true
+                  message: "Token is valid"
+                  username: "user123"
+                  expiresAt: "2024-01-20T10:30:00Z"
+          '400':
+            description: Неверный формат токена
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                examples:
+                  invalidFormat:
+                    summary: Неверный формат заголовка Authorization
+                    value:
+                      field: "Authorization"
+                      message: "Invalid Authorization header format"
+                  missingToken:
+                    summary: Отсутствует токен
+                    value:
+                      field: "Authorization"
+                      message: "Authorization header is required"
+          '401':
+            description: Токен невалиден
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ErrorResponse'
+                examples:
+                  expired:
+                    summary: Токен просрочен
+                    value:
+                      field: "Authorization"
+                      message: "Token has expired"
+                  invalid:
+                    summary: Невалидный токен
+                    value:
+                      field: "Authorization"
+                      message: "Invalid token"
+                  malformed:
+                    summary: Неправильный формат токена
+                    value:
+                      field: "Authorization"
+                      message: "Malformed token"
+
+
+
+
+  /translate:
+    post:
+      tags:
+        - Translate
+      summary: API для перевода - неофициальный google
+      description: |
+        Неофициальный google translate API
+        **Внимание:** Этот endpoint работает на отдельном сервере http://192.168.0.103:5000
+      servers:
+        - url: http://192.168.0.103:5000
+          description: Translate API
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                q:
+                  type: string
+                  description: Текст для перевода
+                  example: "Hello"
+                source:
+                  type: string
+                  description: Исходный язык
+                  example: "en"
+                target:
+                  type: string
+                  description: Целевой язык
+                  example: "ru"
+              required:
+                - q
+                - source
+                - target
+            example:
+              q: "Hello"
+              source: "en"
+              target: "ru"
+      responses:
+        '200':
+          description: Успешный перевод
+          content:
+            application/json:
+              example:
+                quality: "high"
+                translatedText: "Hola Mundo"
+
+
+
+
+
+
+
+
+
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        field:
+          type: string
+          nullable: true
+          description: Поле, в котором произошла ошибка (если применимо)
+          example: "username"
+        message:
+          type: string
+          description: Сообщение об ошибке
+          example: "Пользователь с таким username уже существует"
+      required:
+        - message
+
+    UserRegistrationDto:
+      type: object
+      required:
+        - email
+        - password
+        - username
+        - learningLanguageId
+        - nativeLanguageId
+      properties:
+        email:
+          type: string
+          format: email
+          description: Email пользователя
+          example: "user@example.com"
+        password:
+          type: string
+          format: password
+          description: Пароль (минимум 6 символов)
+          example: "password123"
+          minLength: 6
+        username:
+          type: string
+          description: Никнейм пользователя
+          example: "user"
+        learningLanguageId:
+          type: number
+          description: Id изучаемого языка в БД
+          example: 2
+        nativeLanguageId:
+          type: number
+          description: Id родного языка в БД
+          example: 1
+      description: Данные для регистрации пользователя
+
+    LoginRequestDto:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          format: username
+          description: Никнейм пользователя
+          example: "user"
+        password:
+          type: string
+          format: password
+          description: Пароль пользователя
+          example: "password123"
+      description: Данные для входа в систему
+
+    AuthResponseDto:
+      type: object
+      properties:
+        token:
+          type: string
+          description: JWT токен доступа
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+      description: Ответ аутентификации с JWT токеном
+
+    CardDto:
+      type: object
+      required:
+        - folderId
+        - text
+        - textTranslation
+        - isImage
+      properties:
+        cardId:
+          type: integer
+          format: int64
+          description: ID карточки (автоматически генерируется)
+          example: 123
+        folderId:
+          type: integer
+          format: int64
+          description: ID папки, к которой принадлежит карточка
+          example: 1
+        text:
+          type: string
+          description: Текст на изучаемом языке (передняя сторона карточки)
+          example: "Hello"
+        textTranslation:
+          type: string
+          description: Перевод текста на родной язык (обратная сторона карточки)
+          example: "Привет"
+        isImage:
+          type: boolean
+          description: Флаг, указывающий является ли контент изображением
+          example: false
+      example:
+        cardId: 123
+        folderId: 1
+        text: "Hello"
+        textTranslation: "Привет"
+        isImage: false
+
+    CardPartialUpdateDto:
+      type: object
+      description: DTO для частичного обновления карточки (все поля опциональны)
+      properties:
+        folderId:
+          type: integer
+          format: int64
+          nullable: true
+          description: ID папки для перемещения карточки
+          example: 2
+        text:
+          type: string
+          nullable: true
+          description: Новый текст на изучаемом языке
+          example: "Good morning"
+        textTranslation:
+          type: string
+          nullable: true
+          description: Новый перевод текста
+          example: "Доброе утро"
+        isImage:
+          type: boolean
+          nullable: true
+          description: Флаг, указывающий является ли контент изображением
+          example: false
+      example:
+        text: "Good morning"
+        textTranslation: "Доброе утро"
+        folderId: 2
+
+    CardPageDto:
+      type: object
+      description: DTO для пагинированного списка карточек
+      properties:
+        cards:
+          type: array
+          description: Список карточек на текущей странице
+          items:
+            $ref: '#/components/schemas/CardGetForFolderDto'
+        currentPage:
+          type: integer
+          description: Текущая страница
+          example: 1
+        totalPages:
+          type: integer
+          description: Общее количество страниц
+          example: 5
+        hasNext:
+          type: boolean
+          description: Есть ли следующая страница
+          example: true
+        hasPrevious:
+          type: boolean
+          description: Есть ли предыдущая страница
+          example: false
+      example:
+        currentPage: 1
+        totalPages: 5
+        hasNext: true
+        hasPrevious: false
+        cards:
+          - $ref: '#/components/schemas/CardGetForFolderDto'
+
+    CardGetForFolderDto:
+      type: object
+      description: DTO для получения информации о карточке в списке папки
+      properties:
+        cardId:
+          type: integer
+          format: int64
+          description: ID карточки
+          example: 123
+        folderId:
+          type: integer
+          format: int64
+          description: ID папки
+          example: 1
+        text:
+          type: string
+          description: Текст на изучаемом языке
+          example: "Hello"
+        textTranslation:
+          type: string
+          description: Перевод текста
+          example: "Привет"
+        isImage:
+          type: boolean
+          description: Флаг изображения
+          example: false
+      example:
+        cardId: 123
+        folderId: 1
+        text: "Hello"
+        textTranslation: "Привет"
+        isImage: false
+
+    FolderCreateDto:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Название папки
+          example: "Мои карточки"
+          maxLength: 255
+      example:
+        name: "Мои карточки"
+
+    FolderIdResponse:
+      type: object
+      description: Ответ после создания папки
+      properties:
+        folderId:
+          type: integer
+          format: int64
+          description: ID созданной папки
+          example: 1
+        name:
+          type: string
+          description: Название созданной папки
+          example: "Мои карточки"
+      example:
+        folderId: 1
+        name: "Мои карточки"
+
+    FolderGetDto:
+      type: object
+      description: DTO для получения информации о папке в списке
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: ID папки
+          example: 1
+        name:
+          type: string
+          description: Название папки
+          example: "Мои карточки"
+        # Добавьте другие свойства, если они есть в вашем классе FolderGetDto
+      example:
+        id: 1
+        name: "Мои карточки"
+
+    FolderPageDto:
+      type: object
+      description: DTO для пагинированного списка папок
+      properties:
+        folders:
+          type: array
+          description: Список папок на текущей странице
+          items:
+            $ref: '#/components/schemas/FolderGetDto'
+        currentPage:
+          type: integer
+          description: Текущая страница
+          example: 1
+        totalPages:
+          type: integer
+          description: Общее количество страниц
+          example: 3
+        hasNext:
+          type: boolean
+          description: Есть ли следующая страница
+          example: true
+        hasPrevious:
+          type: boolean
+          description: Есть ли предыдущая страница
+          example: false
+      example:
+        currentPage: 1
+        totalPages: 3
+        hasNext: true
+        hasPrevious: false
+        folders:
+          - id: 1
+            name: "Папка 1"
+          - id: 2
+            name: "Папка 2"
+
+    AllCardsDto:
+      type: object
+      description: Статистика по всем карточкам пользователя
+      properties:
+        cardCount:
+          type: integer
+          description: Общее количество карточек
+          example: 150
+        nearestReviewTime:
+          $ref: '#/components/schemas/ReviewTimeDto'
+      example:
+        cardCount: 150
+        nearestReviewTime:
+          $ref: '#/components/schemas/ReviewTimeDto'
+
+    ReviewTimeDto:
+      type: object
+      description: DTO для времени повторения карточки
+      properties:
+        # Добавьте свойства вашего ReviewTimeDto
+        time:
+          type: string
+          format: date-time
+          description: Время ближайшего повторения
+          example: "2024-01-15T10:30:00Z"
+        # Другие свойства, которые есть в вашем классе
+      example:
+        time: "2024-01-15T10:30:00Z"
+
+    FoldersGetAllDto:
+      type: object
+      description: DTO для получения всех папок пользователя
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: ID папки
+          example: 1
+        name:
+          type: string
+          description: Название папки
+          example: "Мои карточки"
+      example:
+        id: 1
+        name: "Мои карточки"
+
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Сообщение об успешной операции
+          example: "Папка успешно удалена"
+
+    LanguageDto:
+      type: object
+      description: DTO для представления языка в системе
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Уникальный идентификатор языка
+          example: 1
+        name:
+          type: string
+          description: Название языка
+          example: "English"
+      required:
+        - id
+        - name
+      example:
+        id: 1
+        name: "English"
+
+    UserProfileDto:
+      type: object
+      description: DTO для представления профиля пользователя
+      properties:
+        username:
+          type: string
+          description: Имя пользователя
+          example: "user123"
+        email:
+          type: string
+          format: email
+          description: Email пользователя
+          example: "user@example.com"
+        learningLanguageId:
+          type: integer
+          format: int64
+          description: ID изучаемого языка
+          example: 1
+        nativeLanguageId:
+          type: integer
+          format: int64
+          description: ID родного языка
+          example: 2
+      required:
+        - username
+        - email
+        - learningLanguageId
+        - nativeLanguageId
+      example:
+        username: "user123"
+        email: "user@example.com"
+        learningLanguageId: 1
+        nativeLanguageId: 2
+
+    UserProfileChangeDto:
+      type: object
+      description: DTO для изменения профиля пользователя (все поля опциональны)
+      properties:
+        username:
+          type: string
+          nullable: true
+          description: Новое имя пользователя
+          example: "new_username"
+        email:
+          type: string
+          format: email
+          nullable: true
+          description: Новый email
+          example: "new_email@example.com"
+        password:
+          type: string
+          nullable: true
+          description: Новый пароль
+          example: "new_password123"
+        learningLanguageId:
+          type: integer
+          format: int64
+          nullable: true
+          description: ID нового изучаемого языка
+          example: 3
+        nativeLanguageId:
+          type: integer
+          format: int64
+          nullable: true
+          description: ID нового родного языка
+          example: 4
+      example:
+        username: "new_username"
+        email: "new_email@example.com"
+        password: "new_password123"
+        learningLanguageId: 3
+        nativeLanguageId: 4
+
+
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: "JWT"
+      description: JWT токен аутентификации
+
+security:
+  - bearerAuth: []
