@@ -3,7 +3,7 @@
 
 Веб-приложение для запоминания иностранных слов. Благодаря нему, Вы сможете изучать иностранные языки легко и непренуждённо, используя технику интервального повторения, в связи с чем, запоминание слов увеличится в разы.
 
-![Работа приложения](https://learn-it-easy.github.io/backend/presentation/presentation.mp4)
+[![Работа приложения](./images/demo.png)](https://learn-it-easy.github.io/backend/presentation/presentation.mp4)
 
 ## О приложении
 
